@@ -321,10 +321,6 @@ CODE_END;
 		$src = PLX_PLUGINS . __CLASS__ . '/' . __CLASS__ . '.js';
 ?>
 		<script type="text/javascript" src="<?php echo $src; ?>" data-plugin="<?php echo __CLASS__; ?>"></script>
-<!--
-<?php print_r($this->fields); ?>
--->
-<?php
 	}
 
 	/* -------------------- article.php ------------------------ */
@@ -371,11 +367,12 @@ ADMIN_ARTICLE_POSTDATA_CODE;
 	}
 
 	public function adminEntry($data, $place=self::BOTTOM_ART) {
-		foreach ($this->indices() as $key) {
-			if($this->getParam('place' . $key) != $place) { continue; }
-
-			$fieldName = self::PREFIX . $this->getParam('name' . $key);
-			$caption = ucfirst($this->getParam('label' . $key));
+		$entries = array_filter($this->fields, function($value) use($place) {
+			return (!empty($value['place']) and $value['place'] == $place);
+		});
+		foreach($entries as $key => $params) {
+			$fieldName = self::PREFIX . $key;
+			$caption = $params['label'];
 			$value = (!empty($data) and array_key_exists($fieldName, $data)) ? $data[$fieldName] : '';
 			if($place != self::TOP_STATIC and $place != self::BOTTOM_STATIC) { // article
 				$size = ($place == self::SIDEBAR_ART) ? '27-255' : '42-255';
@@ -392,7 +389,7 @@ ADMIN_ARTICLE_POSTDATA_CODE;
 				<div class="grid">
 					<div class="col sml-12<?php if($place == self::TOP_ART) { echo ' med-7 lrg-8'; } /* hack against PluXml */ ?>">
 <?php
-			switch($this->getParam('entry' . $key)) {
+			switch($params['entry']) {
 				case self::LIGNE :
 ?>
 						<label for="id_title"><?php echo $caption ?>&nbsp;:</label>
