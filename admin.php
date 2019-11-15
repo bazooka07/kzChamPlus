@@ -72,7 +72,7 @@ $artStatus = array(
 $indices = $plxPlugin->indices();
 $artFields = array();
 foreach($indices as $indice) {
-	if($plxPlugin->adminDisplay($indice)) {
+	if($plxPlugin->adminArtDisplay($indice)) {
 		$artFields[$plxPlugin->getParam('name' . $indice)] = $plxPlugin->getParam('label' . $indice);
 	}
 }

@@ -22,12 +22,14 @@ if(filter_has_var(INPUT_POST, 'name')) {
 				if($n == 'name') { continue; }
 				$param = $n . $indice;
 				if(!empty($reqs[$n][$indice])) {
-					$value = trim($reqs[$n][$indice]);
-					if(!$plxPlugin->isBoolean($n)) {
-						$plxPlugin->setParam($param, $value, ($n != 'textarea') ? 'string' : 'numeric');
+					if($plxPlugin->isNumeric($n)) {
+						$value = intval(trim($reqs[$n][$indice]));
+						$format = 'numeric';
 					} else {
-						$plxPlugin->setParam($param, 1, 'numeric');
+						$value = trim($reqs[$n][$indice]);
+						$format = 'string';
 					}
+					$plxPlugin->setParam($param, $value, $format);
 				} elseif($n == 'label') {
 					$plxPlugin->setParam($param, ucfirst($names[$indice]), 'string');
 				} else {

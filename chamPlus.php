@@ -25,19 +25,52 @@
 
 class chamPlus extends plxPlugin {
 	const PREFIX = 'cps_';
+	// pour les articles utilisant le plugin champArt, décommenter la ligne ci-dessous et supprimer la ligne au dessus
+	// const PREFIX = 'champArt_';
 
+	const ADMIN_ARTICLE_CODE =
+		'<?php $plxAdmin->plxPlugins->aPlugins[\'' .
+		__CLASS__ .
+		'\']->adminEntry((!empty($result)) ? $result : false, #PLACE#); ?>';
+
+	const ADMIN_STATIC_CODE =
+		'<?php $plxAdmin->plxPlugins->aPlugins[\'' .
+		__CLASS__ .
+		'\']->adminEntry($plxAdmin->aStats[$id], #PLACE#); ?>';
+
+	const LIGNE = 3;
+	const BLOCK_TEXT = 1;
+	const MEDIA = 2;
+	// pour champArt valeurs possibles pour $fieldTypes: ligne, bloc
 	public $fieldTypes = array(
-		3 => 'ligne',
-		4 => 'sidebar',
-		1 => 'bloc-texte',
-		2 => 'media'
+		self::LIGNE			=> 'ligne',
+		self::MEDIA			=> 'media',
+		self::BLOCK_TEXT	=> 'bloc-texte'
 	);
+
+	/* only for static page */
+	const BOTTOM_STATIC = 1;
+	const TOP_STATIC = 5;
+	/* where in the article page */
+	const TOP_ART = 2;
+	const BOTTOM_ART = 3;
+	const SIDEBAR_ART = 4;
+
+	// pour champArt clés possibles pour $places ; top, side, bot, foot
+	public $places = array(
+		self::BOTTOM_ART	=> 'Pied article',
+		self::SIDEBAR_ART	=> 'sidebar',
+		self::TOP_ART		=> 'Tête article',
+		self::BOTTOM_STATIC	=> 'Pied static',
+		self::TOP_STATIC	=> 'Tête static',
+	);
+
 	public $paramsNames = array(
-		'name' =>		FILTER_SANITIZE_STRING,
-		'label' =>		FILTER_SANITIZE_STRING,
-		'textarea' =>	FILTER_SANITIZE_STRING,
-		'group' =>		FILTER_SANITIZE_STRING,
-		'static' =>		FILTER_SANITIZE_STRING
+		'name' =>	FILTER_SANITIZE_STRING, // nom du champ
+		'label' =>	FILTER_SANITIZE_STRING, // libellé du champ
+		'entry' =>	FILTER_VALIDATE_INT, // type de saisie : ligne, bloc-texte, photo (codé en numérique)
+		'group' =>	FILTER_SANITIZE_STRING,
+		'place' =>	FILTER_VALIDATE_INT // emplacement pour la saisie (codé en numérique)
 	);
 
 	public $options = array('no_integration'); # extended for Pluxml version <= 5.4
@@ -46,15 +79,16 @@ class chamPlus extends plxPlugin {
 
 	public function __construct($default_lang) {
 		parent::__construct($default_lang);
-		parent::setConfigProfil(PROFIL_ADMIN);
-		parent::setAdminProfil(PROFIL_ADMIN, PROFIL_MANAGER);
-		parent::setAdminMenu($this->getLang('L_TITLE_MENU'), '', $this->getLang('HELP_MENU'));
 
+		self::_getFields();
 		/* ********** hooks inside class.plx.motor.php ******** */
 		$this->addHook('plxMotorParseArticle', 'plxMotorParseArticle');
 		$this->addHook('plxMotorGetStatiques', 'plxMotorGetStatiques');
 
 		if(defined('PLX_ADMIN')) {
+			parent::setConfigProfil(PROFIL_ADMIN);
+			parent::setAdminProfil(PROFIL_ADMIN, PROFIL_MANAGER);
+			parent::setAdminMenu($this->getLang('L_TITLE_MENU'), '', $this->getLang('HELP_MENU'));
 			/* ******** hooks inside class.plx.admin.php ********** */
 			$this->addHook('plxAdminEditArticleXml', 'plxAdminEditArticleXml');
 			$this->addHook('plxAdminEditStatique', 'plxAdminEditStatique');
@@ -67,16 +101,16 @@ class chamPlus extends plxPlugin {
 			switch(basename($_SERVER['PHP_SELF'], '.php')) {
 				case 'article' :
 					/* ******** hooks inside article.php ****************** */
-					$this->addHook('AdminArticleSidebar', 'AdminArticleSidebar');
-					$this->addHook('AdminArticleContent', 'AdminArticleContent');
-					$this->addHook('AdminArticleInitData', 'AdminArticleInitData');
 					$this->addHook('AdminArticlePreview', 'AdminArticlePreview');
 					$this->addHook('AdminArticlePostData', 'AdminArticlePostData');
 					$this->addHook('AdminArticleParseData', 'AdminArticleParseData');
-					$this->addHook('AdminArticleFoot', 'AdminArticleFoot');
+					$this->addHook('AdminArticleTop', 'AdminArticleTop');
+					$this->addHook('AdminArticleContent', 'AdminArticleContent');
+					$this->addHook('AdminArticleSidebar', 'AdminArticleSidebar');
 					break;
 				case 'statique' :
 					/* ******** hooks inside statique.php ***************** */
+					$this->addHook('AdminStaticTop', 'AdminStaticTop');
 					$this->addHook('AdminStatic', 'AdminStatic');
 					break;
 				case 'plugin' :
@@ -88,7 +122,7 @@ class chamPlus extends plxPlugin {
 					}
 					break;
 			}
-		} else {
+		} else { // site
 			/* ********** hooks inside class.plx.show.php ******** */
 			if (defined('PLX_VERSION') and version_compare(PLX_VERSION, '5.5', '>=')) {
 				$this->addHook('plxShowLastArtListContent', 'plxShowLastArtListContent');
@@ -96,15 +130,41 @@ class chamPlus extends plxPlugin {
 				$this->addHook('plxShowLastArtList', 'plxShowLastArtList');
 				$this->options[] = 'lastartlist';
 			}
-		}
+			/* ********** new hooks for this plugin ********* */
+			// Hook du plugin à utiliser sur le site dans un thème
+			$this->addHook('chamPlus', 'chamPlus');
+			// Affiche les champs d'un article selon le format indiqué
+			$this->addHook('chamPlusArticle', 'chamPlusArticle');
+			// renvoie tous les champs sous forme de tableau
+			$this->addHook('chamPlusList', 'chamPlusList');
 
-		/* ********** new hooks for this plugin ********* */
-		// Hook du plugin à utiliser sur le site dans un thème
-		$this->addHook('chamPlus', 'chamPlus');
-		// Affiche les champs d'un article selon le format indiqué
-		$this->addHook('chamPlusArticle', 'chamPlusArticle');
-		// renvoie tous les champs sous forme de tableau
-		$this->addHook('chamPlusList', 'chamPlusList');
+			/* ******* compatibilté avec le plugin champArt  ****** */
+			$this->addHook('champArt', 'champArt');
+		}
+	}
+
+	private function _getFields() {
+		$fields = array();
+		$params = $this->getParams();
+		if(!empty($params)) {
+			$names = array_filter(
+				array_keys($params),
+				function($k) { return (strpos($k, 'name') === 0); }
+			);
+			foreach(array_map(function($v) { return substr($v, strlen('name')); }, $names) as $indice) {
+				$entry = array();
+				foreach(array('label', 'group') as $k) {
+					$value = $this->getParam($k . $indice);
+					if(!empty($value)) { $entry[$k] = $value; }
+				}
+				foreach(array('entry', 'place') as $k) {
+					$value = intval($this->getParam($k . $indice));
+					if(!empty($value)) { $entry[$k] = $value; }
+				}
+				$fields[$this->getParam('name' . $indice)] = $entry;
+			}
+		}
+		$this->fields = $fields;
 	}
 
 	private function _save_code($content) {
@@ -112,10 +172,9 @@ class chamPlus extends plxPlugin {
 		file_put_contents($filename, $content);
 	}
 
-	// pour la saisie des champs dans config.php
-	public function isBoolean($name) {
-		// return in_array($name, array('static'));
-		return $name == 'static';
+	// pour la sauvegarde des champs dans config.php
+	public function isNumeric($name) {
+		return in_array($name, array('place', 'entry'));
 	}
 
 	// retourne les indices des champs
@@ -136,46 +195,23 @@ class chamPlus extends plxPlugin {
 
 	// the field is only for static pages
 	private function isStatic($indice) {
-		return ($this->getParam('static'.$indice) > 0);
+		return in_array($this->getParam('place'.$indice), array(self::TOP_STATIC, self::BOTTOM_STATIC));
 	}
 
 	private function isTextarea($indice) {
-		return (!$this->isStatic($indice) and $this->getParam('textarea'.$indice) == 1);
-	}
-
-	private function isSidebarArt($indice) {
-		return (!$this->isStatic($indice) and $this->getParam('textarea'.$indice) == 4);
-	}
-
-	private function isContentArt($indice) {
-		return (!$this->isStatic($indice) and $this->getParam('textarea'.$indice) == 3);
+		return (!$this->isStatic($indice) and $this->getParam('entry'.$indice) == self::BLOCK_TEXT);
 	}
 
 	private function isMediaArt($indice) {
-		return (!$this->isStatic($indice) and $this->getParam('textarea'.$indice) == 2);
-	}
-
-	private function isMediaStatic($indice) {
-		return ($this->isStatic($indice) and $this->getParam('textarea'.$indice) == 2);
+		return (!$this->isStatic($indice) and $this->getParam('entry' . $indice) == self::MEDIA);
 	}
 
 	private function isMedia($fieldName) {
 		$result = false;
 		foreach($this->indices() as $idx) {
 			if ($this->getParam('name'.$idx) == $fieldName) {
-				$result = ($this->getParam('textarea'.$idx) == 2);
+				$result = ($this->getParam('entry'.$idx) == self::MEDIA);
 				break;
-			}
-		}
-		return $result;
-	}
-
-	private function getMediasArt() {
-		$result = array();
-		$indices = $this->indices();
-		foreach ($indices as $i) {
-			if ($this->isMediaArt($i)) {
-				$result[] = $this->getParam('name'.$i);
 			}
 		}
 		return $result;
@@ -184,6 +220,10 @@ class chamPlus extends plxPlugin {
 	public function newIndice() {
 		$t = $this->indices();
 		return ((!empty($t)) ? max($t) + 1 : 1);
+	}
+
+	public function adminArtDisplay($indice) {
+		return !in_array($this->getParam('place' . $indice), array(self::TOP_STATIC, self::BOTTOM_STATIC));
 	}
 
 	public function printFieldConfig($indice) {
@@ -197,17 +237,20 @@ class chamPlus extends plxPlugin {
 ?>
 					<td>
 <?php
-			if ($name == 'textarea') { // <select>
-				if(empty($value)) { $value = '3'; }
-				plxUtils::printSelect($field, $this->fieldTypes, $value);
-				$order = 'order[' . $indice . ']';
-				$this->order++;
-				plxUtils::printInput($order, $this->order, 'hidden');
-			} elseif($this->isBoolean($name)) { // <input type="checkbox" />
-				$checked = (!empty($value)) ? 'checked' : '';
-				plxUtils::printInput($field, '1', 'checkbox', '', false, '', '', $checked);
-			} else {
-				plxUtils::printInput($field, $value, 'text', '');
+			switch($name) {
+				case 'entry':
+					if(empty($value)) { $value = self::LIGNE; }
+					plxUtils::printSelect($field, $this->fieldTypes, $value);
+					$order = 'order[' . $indice . ']';
+					$this->order++;
+					plxUtils::printInput($order, $this->order, 'hidden');
+					break;
+				case 'place' :
+					if(empty($value)) { $value = self::BOTTOM_ART; }
+					plxUtils::printSelect($field, $this->places, $value);
+					break;
+				default:
+					plxUtils::printInput($field, $value, 'text', '');
 			}
 ?>
 					</td>
@@ -218,17 +261,18 @@ class chamPlus extends plxPlugin {
 <?php
 	}
 
-	public function adminDisplay($indice) {
-		return (
-			(
-				$this->getParam('textarea' . $indice) === '3' or
-				$this->getParam('textarea' . $indice) === '4'
-			) and
-			empty($this->getParam('static' . $indice))
-		);
-	}
-
 	/* -------------- Pour côté site ------------------ */
+
+	private function getMediasArt() {
+		$result = array();
+		$indices = $this->indices();
+		foreach ($indices as $i) {
+			if ($this->isMediaArt($i)) {
+				$result[] = $this->getParam('name'.$i);
+			}
+		}
+		return $result;
+	}
 
 	/* *********************************************************** *
 	 * le nom de variables $pls_medias et $cps_matches est commun  *
@@ -277,267 +321,222 @@ CODE_END;
 		$src = PLX_PLUGINS . __CLASS__ . '/' . __CLASS__ . '.js';
 ?>
 		<script type="text/javascript" src="<?php echo $src; ?>" data-plugin="<?php echo __CLASS__; ?>"></script>
+<!--
+<?php print_r($this->fields); ?>
+-->
 <?php
 	}
 
-	// ajoute les champs supplémentaires dans le panneau latéral droit de l'édition de l'article
-	public function AdminArticleSidebar() {
-		foreach ($this->indices() as $key) {
-			if ($this->isSidebarArt($key) or $this->isMediaArt($key)) {
-				$fieldName = self::PREFIX . $this->getParam('name' . $key);
-				$field = "\$$fieldName";
-				$label = ucfirst($this->getParam('label' . $key));
-				$onclick = '';
-				if ($this->isMediaArt($key)) {
-					$label .= ' <span class="cps-medias">Liste médias</span>';
-					$label .= ' <span class="cps-preview">Aperçu</span>';
-				}
-				echo <<< EOT
-					<div>
-						<label for="id_$fieldName">$label</label>
-						<?php plxUtils::printInput('$fieldName',plxUtils::strCheck($field),'text','27-255'); echo "\n"; ?>
-					</div>\n
-EOT;
-			}
-		}
-	}
-
-	// ajoute les champs supplémentaires sous le contenu de l'article avec la balise textarea dans l'édition de l'article
-	public function AdminArticleContent() {
-		foreach ($this->indices() as $key) {
-			if (($inputText = $this->isContentArt($key)) or ($textArea = $this->isTextarea($key))) {
-				$fieldName = self::PREFIX.$this->getParam('name'.$key);
-				$field = "\$chamPlus['$fieldName']";
-				$label = ucfirst($this->getParam('label'.$key));
-				if ($inputText) {
-					echo <<< EOT
-				<div class="grid">
-					<div class="col sml-12">
-						<label for="id_$fieldName">$label&nbsp;:</label>
-						<?php plxUtils::printInput('$fieldName',plxUtils::strCheck(\$$fieldName),'text','50-255',false,'full-width'); ?>
-					</div>
-				</div>\n
-EOT;
-				} elseif ($textArea) {
-					$display = L_ARTICLE_CHAPO_DISPLAY;
-					$hide = L_ARTICLE_CHAPO_HIDE;
-					echo <<< EOT
-				<div class="grid">
-					<div class="col sml-12">
-						<label for="id_$fieldName">$label&nbsp;:&nbsp;<a id="toggler_$fieldName" href="javascript:void(0)" onclick="toggleDiv('toggle_$fieldName', 'toggler_$fieldName', '$display','$hide')"><?php echo \$$fieldName==''?'$display':'$hide' ?></a></label>
-						<div id="toggle_$fieldName"<?php echo \$$fieldName!=''?'':' style="display:none"' ?>>
-						<?php plxUtils::printArea('$fieldName',plxUtils::strCheck(\$$fieldName),35,8,false,'full-width'); ?>
-						</div>
-					</div>
-				</div>\n
-EOT;
-				}
-			}
-		}
-	}
-
-	const PATTERN_ART = <<< 'PATTERN_ART'
+	/* -------------------- article.php ------------------------ */
+	const ADMIN_ARTICLE_PARSE_DATA_CODE = <<< 'ADMIN_ARTICLE_PARSE_DATA_CODE'
 	$#FIELD_NAME# = $result['#FIELD_NAME#'];
-
-PATTERN_ART;
+ADMIN_ARTICLE_PARSE_DATA_CODE;
 	public function AdminArticleParseData() {
-		$code = "<?php\n";
+		echo '<?php' . PHP_EOL;
 		foreach($this->indices() as $key) {
 			if (! $this->isStatic($key)) {
 				$fieldName = self::PREFIX.$this->getParam('name'.$key);
-				$code .= str_replace('#FIELD_NAME#', $fieldName, self::PATTERN_ART);
+				echo str_replace('#FIELD_NAME#', $fieldName, self::ADMIN_ARTICLE_PARSE_DATA_CODE) . PHP_EOL;
 				}
 		}
-		$code .= "?>\n";
-		echo $code;
+		echo '?>' . PHP_EOL;
 	}
 
-	// initialise les champs supplémentaires pour un nouvel article
-	const PATTERN_ART_INIT = <<< 'PATTERN_ART'
-	$#FIELD_NAME# = '';
-
-PATTERN_ART;
-	public function AdminArticleInitData() {
-		$code = "<?php\n";
-		foreach ($this->indices() as $key) {
-			if (! $this->isStatic($key)) {
-				$fieldName = self::PREFIX.$this->getParam('name'.$key);
-				$code .= str_replace('#FIELD_NAME#', $fieldName, self::PATTERN_ART_INIT);
-			}
-		}
-		$code .= "?>\n";
-		echo $code;
-	}
-
+	const ADMIN_ARTICLE_PREVIEW_CODE = <<< 'ADMIN_ARTICLE_PREVIEW_CODE'
+	$art['#FIELD_NAME#'] = $_POST['#FIELD_NAME#'];
+ADMIN_ARTICLE_PREVIEW_CODE;
 	public function AdminArticlePreview() {
-		$code = "<?php\n";
-		foreach ($this->indices() as $key) {
-			if (! $this->isStatic($key)) {
+		echo '<?php' . PHP_EOL;
+		foreach($this->indices() as $key) {
+			if(!$this->isStatic($key)) {
 				$fieldName = self::PREFIX.$this->getParam('name'.$key);
-				$code .= <<< RECORD
-	\$art['$fieldName'] = \$_POST['$fieldName'];
-
-RECORD;
-				}
-			}
-		$code .= "?>\n";
-		echo $code;
-	}
-
-	public function AdminArticlePostData() {
-		$code = "<?php\n";
-		foreach ($this->indices() as $key) {
-			if (! $this->isStatic($key)) {
-				$fieldName = self::PREFIX.$this->getParam('name'.$key);
-				$code .= <<< RECORD
-	\$$fieldName = \$_POST['$fieldName'];
-
-RECORD;
+				echo str_replace('#FIELD_NAME#', $fieldName, self::ADMIN_ARTICLE_PREVIEW_CODE) . PHP_EOL;
 			}
 		}
-		$code .= "?>\n";
-		echo $code;
+		echo '?>' . PHP_EOL;
 	}
 
-	public function AdminArticleFoot() {
-		global $plxAdmin;
-		$mediasManagerPath = $plxAdmin->racine.'core/admin/medias.php';
-		$pluxmlRoot = $plxAdmin->racine;
+	const ADMIN_ARTICLE_POSTDATA_CODE = <<< 'ADMIN_ARTICLE_POSTDATA_CODE'
+	$#FIELD_NAME# = $_POST['#FIELD_NAME#'];
+ADMIN_ARTICLE_POSTDATA_CODE;
+	public function AdminArticlePostData() {
+		echo '<?php' . PHP_EOL;
+		foreach ($this->indices() as $key) {
+			if (! $this->isStatic($key)) {
+				$fieldName = self::PREFIX.$this->getParam('name'.$key);
+				echo str_replace('#FIELD_NAME#', $fieldName, self::ADMIN_ARTICLE_POSTDATA_CODE) . PHP_EOL;
+			}
+		}
+		echo '?>' . PHP_EOL;
+	}
 
+	public function adminEntry($data, $place=self::BOTTOM_ART) {
+		foreach ($this->indices() as $key) {
+			if($this->getParam('place' . $key) != $place) { continue; }
+
+			$fieldName = self::PREFIX . $this->getParam('name' . $key);
+			$caption = ucfirst($this->getParam('label' . $key));
+			$value = (!empty($data) and array_key_exists($fieldName, $data)) ? $data[$fieldName] : '';
+			if($place != self::TOP_STATIC and $place != self::BOTTOM_STATIC) { // article
+				$size = ($place == self::SIDEBAR_ART) ? '27-255' : '42-255';
+				$cols = 35;
+				$rows = 8;
+				$className = ($place == self::SIDEBAR_ART) ? '' : 'full-width';
+			} else { // static page - no sidebar !
+				$size = '50-255';
+				$className = 'full-width';
+				$cols = 35;
+				$rows = 8;
+			}
 ?>
-	<script type="text/javascript">
-		var mediasManagerPath = '<?php echo $mediasManagerPath?>';
-		var pluxmlRoot = '<?php echo $pluxmlRoot; ?>';
-	</script>
+				<div class="grid">
+					<div class="col sml-12<?php if($place == self::TOP_ART) { echo ' med-7 lrg-8'; } /* hack against PluXml */ ?>">
 <?php
+			switch($this->getParam('entry' . $key)) {
+				case self::LIGNE :
+?>
+						<label for="id_title"><?php echo $caption ?>&nbsp;:</label>
+						<?php plxUtils::printInput($fieldName, plxUtils::strCheck($value), 'text', $size, false, $className); echo "\n"; ?>
+<?php
+					break;
+				case self::BLOCK_TEXT :
+					if(!$place != self::SIDEBAR_ART) { // static 140,30 au lieu de 35,8
+?>
+						<label for="id_<?php echo $fieldName; ?>"><?php echo $caption; ?>&nbsp;:&nbsp;<a id="toggler_<?php echo $fieldName; ?>" href="javascript:void(0)" onclick="toggleDiv('toggle_<?php echo $fieldName; ?>', 'toggler_<?php echo $fieldName; ?>', '<?php echo L_ARTICLE_CHAPO_DISPLAY ?>','<?php echo L_ARTICLE_CHAPO_HIDE ?>')"><?php echo (empty($value)) ? L_ARTICLE_CHAPO_DISPLAY : L_ARTICLE_CHAPO_HIDE; ?></a></label>
+						<div id="toggle_<?php echo $fieldName; ?>"<?php echo ($value !='') ? '' : ' style="display:none"' ?>>
+						<?php plxUtils::printArea($fieldName, plxUtils::strCheck($value), $cols, $rows, false, 'full-width'); echo "\n"; ?>
+						</div>
+<?php
+					}
+					break;
+				case self::MEDIA :
+?>
+						<label for="id_<?php echo $fieldName; ?>">
+							<?php echo $caption; ?>&nbsp;:&nbsp;
+							<a title="<?php echo L_THUMBNAIL_SELECTION ?>" id="toggler_<?php echo $fieldName; ?>" href="javascript:void(0)" onclick="mediasManager.openPopup('id_<?php echo $fieldName; ?>', true)" style="outline:none; text-decoration: none">+</a>
+						</label>
+						<?php plxUtils::printInput($fieldName,plxUtils::strCheck($value), 'text', $size, false, $className, '', 'onkeyup="refreshImg(this.value)"'); ?>
+						<div id="id_<?php echo $fieldName; ?>_img">
+						<?php
+						$src = $value;
+						if(!preg_match('@^(?:https?|data):@', $value)) {
+							$src = PLX_ROOT . $value;
+							$src = is_file($src) ? $src : false;
+						}
+						if($src) {
+							echo <<< EOT
+<img src="$src" title="$value" />\n
+EOT;
+						}
+						?>
+						</div>
+<?php
+					break;
+			}
+?>
+					</div>
+				</div>
+<?php
+		}
 	}
+
+	// ajoute les champs supplémentaires dans l'édition de l'article dans article.php
+	public function AdminArticleTop()		{ echo str_replace('#PLACE#', self::TOP_ART,		self::ADMIN_ARTICLE_CODE); }
+	public function AdminArticleContent()	{ echo str_replace('#PLACE#', self::BOTTOM_ART,		self::ADMIN_ARTICLE_CODE); }
+	public function AdminArticleSidebar()	{ echo str_replace('#PLACE#', self::SIDEBAR_ART,	self::ADMIN_ARTICLE_CODE); }
 
 	// ajoute des champs supplémentaires dans l'édition de la page statique dans statique.php
-	public function AdminStatic() {
-		// bug Pluxml 5.4: Pas de Hook dans le bloc "elseif (! empty($_GET['p'])) {...}"
-		global $plxAdmin;
-
-		$mediasManagerPath = $plxAdmin->racine.'core/admin/medias.php';
-		$code = '';
-		foreach ($this->indices() as $key) {
-			if ($this->isStatic($key)) {
-				$fieldName = self::PREFIX.$this->getParam('name'.$key);
-				$label = ucfirst($this->getParam('label'.$key));
-				$onclick = '';
-				if ($this->isMediaStatic($key)) {
-					$label .= ' (Voir la liste des médias)';
-					$onclick = <<< ON_CLICK
- onclick="return cps_mediasManager.open(this, '$mediasManagerPath');"
-ON_CLICK;
-					$onclick .= ' style="cursor: pointer"';
-				}
-				$code .= <<< RECORD
-			<div>
-				<label for="id_$fieldName"$onclick>$label</label>
-				<?php plxUtils::printInput('$fieldName',plxUtils::strCheck(\$plxAdmin->aStats[\$id]['$fieldName']),'text','50-255'); echo "\n"; ?>
-			</div>
-
-RECORD;
-			}
-		}
-		echo $code;
-	}
+	public function AdminStaticTop() 		{ echo str_replace('#PLACE#', self::TOP_STATIC,		self::ADMIN_STATIC_CODE); }
+	public function AdminStatic()			{ echo str_replace('#PLACE#', self::BOTTOM_STATIC,	self::ADMIN_STATIC_CODE); }
 
 	// Load the fields of article from XML file
+	const PLXMOTOR_PARSE_ARTICLE_CODE = <<< 'PLXMOTOR_PARSE_ARTICLE_CODE'
+	$art['#FIELD_NAME#'] = (isset($iTags['#FIELD_NAME#'])) ? plxUtils::getValue($values[$iTags['#FIELD_NAME#'][0]]['value']) : '';
+PLXMOTOR_PARSE_ARTICLE_CODE;
 	public function plxMotorParseArticle() {
-		$code = "<?php\n";
+		echo '<?php' . PHP_EOL;
 		foreach ($this->indices() as $key) {
 			if (!$this->isStatic($key)) {
 				$fieldName = self::PREFIX.$this->getParam('name'.$key);
-				$code .= <<< RECORD
-	\$art['$fieldName'] = (isset(\$iTags['$fieldName'])) ? plxUtils::getValue(\$values[\$iTags['$fieldName'][0]]['value']) : '';
-
-RECORD;
+				echo str_replace('#FIELD_NAME#', $fieldName, self::PLXMOTOR_PARSE_ARTICLE_CODE) . PHP_EOL;
 			}
 		}
-		$code .= "?>\n";
-		echo $code;
+		echo '?>' . PHP_EOL;
 	}
 
 	// load data from statiques.xml in class.plx.motor
+	const PLXMOTOR_GETSTATIQUES_CODE = <<< 'PLXMOTOR_GETSTATIQUES_CODE'
+	$value = (array_key_exists($f, $iTags)) ? plxUtils::getValue($values[$iTags[$f][$i]]['value']) : '';
+	$this->aStats[$number][$f] = $value;
+PLXMOTOR_GETSTATIQUES_CODE;
 	public function plxMotorGetStatiques() {
-		$code = "<?php\n";
+		echo '<?php' . PHP_EOL;
 		foreach ($this->indices() as $key) {
 			if ($this->isStatic($key)) {
 				$fieldName = self::PREFIX.$this->getParam('name'.$key);
-				$code .= <<< LINE
-	\$f = '$fieldName';\n
-LINE;
-				$code .= <<< 'RECORD'
-	$value = (array_key_exists($f, $iTags)) ? plxUtils::getValue($values[$iTags[$f][$i]]['value']) : '';
-	$this->aStats[$number][$f] = $value;
-
-RECORD;
+				echo
+					'$f = \'' . $fieldName . '\';' . PHP_EOL .
+					self::PLXMOTOR_GETSTATIQUES_CODE . PHP_EOL;
 			}
 		}
-		$code .= "?>\n";
-		echo $code;
+		echo '?>' . PHP_EOL;
 	}
 
 	// Save the  fields of article to XML file
+	const PLXADMIN_EDIT_ARTICLE_XML_CODE = <<< 'PLXADMIN_EDIT_ARTICLE_XML_CODE'
+	$xml .= "\t<#FIELD_NAME#><![CDATA[".plxUtils::cdataCheck(trim($content['#FIELD_NAME#']))."]]></#FIELD_NAME#>\n";
+PLXADMIN_EDIT_ARTICLE_XML_CODE;
 	public function plxAdminEditArticleXml() {
-		$code = "<?php\n";
+		echo '<?php' . PHP_EOL;
 		foreach ($this->indices() as $key) {
 			if (! $this->isStatic($key)) {
 				$fieldName = self::PREFIX.$this->getParam('name'.$key);
-				$code .= <<< RECORD
-	\$xml .= "\t<$fieldName><![CDATA[".plxUtils::cdataCheck(trim(\$content['$fieldName']))."]]></$fieldName>\n";
-
-RECORD;
+				echo str_replace('#FIELD_NAME#', $fieldName, self::PLXADMIN_EDIT_ARTICLE_XML_CODE) . PHP_EOL;
 			}
 		}
-		$code .= "?>\n";
-		echo $code;
+		echo '?>' . PHP_EOL;
 	}
 
+	const PLXADMIN_EDITSTATIQUE_CODE = <<< 'PLXADMIN_EDITSTATIQUE_CODE'
+		$this->aStats[\$content['id']]['#FIELD_NAME#'] = $content['#FIELD_NAME#'];
+PLXADMIN_EDITSTATIQUE_CODE;
 	public function plxAdminEditStatique() {
-		$code = "<?php\n";
+		echo '<?php' . PHP_EOL;
 		foreach ($this->indices() as $key) {
 			if ($this->isStatic($key)) {
 				$fieldName = self::PREFIX.$this->getParam('name'.$key);
-				$code .= <<< RECORD
-		\$this->aStats[\$content['id']]['$fieldName'] = \$content['$fieldName'];
-
-RECORD;
-				}
-		}
-		$code .= "?>\n";
-		echo $code;
-	}
-
-	public function plxAdminEditStatiquesUpdate() {
-		$code = "<?php\n";
-		foreach ($this->indices() as $key) {
-			if ($this->isStatic($key)) {
-				$fieldName = self::PREFIX.$this->getParam('name'.$key);
-				$code .= <<< RECORD
-	\$this->aStats[\$static_id]['$fieldName'] = (isset(\$this->aStats[\$static_id]['$fieldName']) ? \$this->aStats[\$static_id]['$fieldName'] : '');
-
-RECORD;
-				}
-		}
-		$code .= "?>\n";
-		echo $code;
-	}
-
-	public function plxAdminEditStatiquesXml() {
-		$code = "<?php\n";
-		foreach ($this->indices() as $key) {
-			if ($this->isStatic($key)) {
-				$fieldName = self::PREFIX.$this->getParam('name'.$key);
-				$code .= <<< RECORD
-	\$xml .= "<$fieldName><![CDATA[".plxUtils::cdataCheck(\$static['$fieldName'])."]]></$fieldName>";
-
-RECORD;
+				echo str_replace('#FIELD_NAME#', $fieldName, self::PLXADMIN_EDITSTATIQUE_CODE) . PHP_EOL;
 			}
 		}
-		$code .= "?>\n";
-		echo $code;
+		echo '?>' . PHP_EOL;
+	}
+
+	const PLXADMIN_EDITSTATIQUES_UPDATE_CODE = <<< 'PLXADMIN_EDITSTATIQUES_UPDATE_CODE'
+	$this->aStats[$static_id]['#FIELD_NAME#'] = (isset($this->aStats[$static_id]['#FIELD_NAME#']) ? $this->aStats[$static_id]['#FIELD_NAME#'] : '');
+PLXADMIN_EDITSTATIQUES_UPDATE_CODE;
+	public function plxAdminEditStatiquesUpdate() {
+		echo '<?php' . PHP_EOL;
+		foreach ($this->indices() as $key) {
+			if ($this->isStatic($key)) {
+				$fieldName = self::PREFIX.$this->getParam('name'.$key);
+				echo str_replace('#FIELD_NAME#', $fieldName, self::PLXADMIN_EDITSTATIQUES_UPDATE_CODE) . PHP_EOL;
+			}
+		}
+		echo '?>' . PHP_EOL;
+	}
+
+	const PLXADMIN_EDITSTATIQUES_XML_CODE = <<< 'PLXADMIN_EDITSTATIQUES_XML_CODE'
+	$xml .= "<#FIELD_NAME#><![CDATA[".plxUtils::cdataCheck($static['#FIELD_NAME#'])."]]></#FIELD_NAME#>";
+PLXADMIN_EDITSTATIQUES_XML_CODE;
+	public function plxAdminEditStatiquesXml() {
+		echo '<?php' . PHP_EOL;
+		foreach ($this->indices() as $key) {
+			if ($this->isStatic($key)) {
+				$fieldName = self::PREFIX.$this->getParam('name'.$key);
+				echo str_replace('#FIELD_NAME#', $fieldName, self::PLXADMIN_EDITSTATIQUES_XML_CODE) . PHP_EOL;
+			}
+		}
+		echo '?>' . PHP_EOL;
 	}
 
 	/* *************************************** */
@@ -685,7 +684,7 @@ CODE_END;
 		} else
 			list($name, $format, $empty_format) = array_pad($params, 3, false);
 		$nameField = self::PREFIX.$name;
-		if ($plxMotor->mode == 'static') {
+		if ($plxMotor->mode == 'place') {
 			$static_id =  $plxMotor->cible;
 			$value = plxUtils::strCheck($plxMotor->aStats[$static_id][$nameField]);
 		}
@@ -727,7 +726,7 @@ EOT;
 					if ($this->getParam('name'.$idx) == $name) {
 						$label = $this->getParam('label'.$idx);
 						$group = $this->getParam('group'.$idx);
-						$type1 = $this->fieldTypes[$this->getParam('textarea'.$idx)];
+						$type1 = $this->fieldTypes[$this->getParam('entry'.$idx)];
 						break;
 					}
 				}
@@ -737,7 +736,7 @@ EOT;
 			}
 		}
 
-		return $false;
+		return false;
 	}
 
 	/* **********************************************************
@@ -883,30 +882,36 @@ TAG_LIST;
 		foreach($this->indices() as $idx) {
 			$name = $this->getParam('name'.$idx);
 			$nameField = self::PREFIX.$name;
-			if (($plxMotor->mode == 'static') and $this->isStatic($idx)) {
+			if (($plxMotor->mode == 'place') and $this->isStatic($idx)) {
 				$static_id =  $plxMotor->cible;
 				$value = addslashes(plxUtils::strCheck($plxMotor->aStats[$static_id][$nameField]));
 			}
-			elseif (($plxMotor->mode != 'static') and ! $this->isStatic($idx))
+			elseif (($plxMotor->mode != 'place') and ! $this->isStatic($idx))
 				$value = addslashes($plxMotor->plxRecord_arts->f($nameField));
 			else
 				$value = false;
 			if ($value !== false) {
-				$label = addslashes($this->getParam('label'.$idx));
-				$group = addslashes($this->getParam('group'.$idx));
-				$type = $this->fieldTypes[$this->getParam('textarea'.$idx)];
-				$content[] = "'$name'=>array('label'=>'$label', 'value'=>'$value', 'type'=>'$type', 'group'=>'$group')";
+				$buf = array();
+				foreach(array('label', 'entry', 'group', 'place') as $f) {
+					switch($f) {
+						case 'entry' : $n = $this->getParam($f . $idx); $buf[$f] = addslashes($this->fieldTypes[$n]) . " ($n)"; break;
+						case 'place' : $n = $this->getParam($f . $idx); $buf[$f] = addslashes($this->places[$n]) . " ($n)"; break;
+						default : $buf[$f] = addslashes($this->getParam($f . $idx));
+					}
+				}
+				$content[$name] = $buf;
 			}
 		}
-
-		if (empty($content))
-			$code = '<?php return false; ?>';
-		else {
-			$a = implode(",", $content);
-			$code = "\$a = array($a); return \$a;";
-		}
-		return $code;
+		return $content;
 	}
 
+	/*
+	 * si $value se termine par '_R' on renvoie la valeur du champ
+	 * si $value se termine par _L on imprime la valeur du champ, précédé de l'étiquette'
+	 * sinon on imprime la valeur du champ
+	 * */
+	public function champArt($value) {
+
+	}
 }
 ?>
