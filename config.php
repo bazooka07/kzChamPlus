@@ -65,13 +65,13 @@ if(filter_has_var(INPUT_POST, 'name')) {
 			<thead>
 				<tr>
 <?php	foreach (array_keys($plxPlugin->paramsNames) as $name) { ?>
-				<th><?php $plxPlugin->lang(strtoupper('L_CHAMPLUS_TITLE_'.$name)); ?></th>
+				<th><?php $plxPlugin->lang(strtoupper('L_TITLE_'.$name)); ?></th>
 <?php	} ?>
 				</tr>
 			</thead>
 			<tbody id="<?php echo $plugin; ?>Table"	data-indice="<?php echo $plxPlugin->newIndice(); ?>">
 <?php
-	foreach ($plxPlugin->indices(true) as $i) {
+	foreach(array_keys($plxPlugin->indexFields) as $i) {
 		$plxPlugin->printFieldConfig($i);
 	}
 ?>
@@ -84,7 +84,7 @@ if(filter_has_var(INPUT_POST, 'name')) {
 ?>
 			<p>
 				<input type="checkbox" value="1" name="<?php echo $k; ?>" id="id_<?php echo $k; ?>"<?php echo $checked; ?> />
-				<label for="id_<?php echo $k; ?>"><?php $plxPlugin->lang(strtoupper('L_CHAMPLUS_'.$k)); ?></label>
+				<label for="id_<?php echo $k; ?>"><?php $plxPlugin->lang(strtoupper('L_'.$k)); ?></label>
 			</p>
 <?php	} ?>
 		</div>
@@ -93,15 +93,15 @@ if(filter_has_var(INPUT_POST, 'name')) {
 <?php
 if(!empty($plxPlugin->helpFile)) {
 ?>
-			<input type="button" id="helpBtn" value="<?php $plxPlugin->lang('L_CHAMPLUS_HELP_LABEL') ?>" />
+			<input type="button" id="helpBtn" value="<?php $plxPlugin->lang('L_HELP_LABEL') ?>" />
 <?php
 }
 ?>
-			<input type="button" id="newFieldBtn" value="<?php $plxPlugin->lang('L_CHAMPLUS_ADD') ?>" />
-			<input type="submit" value="<?php $plxPlugin->lang('L_CHAMPLUS_SAVE') ?>" />
+			<input type="button" id="newFieldBtn" value="<?php $plxPlugin->lang('L_ADD') ?>" />
+			<input type="submit" value="<?php $plxPlugin->lang('L_SAVE') ?>" />
 		</div>
 	</form>
-	<p><?php $plxPlugin->lang('L_CHAMPLUS_WARNING'); ?></p>
+	<p><?php $plxPlugin->lang('L_WARNING'); ?></p>
 <?php
 if(!empty($plxPlugin->helpFile)) {
 ?>

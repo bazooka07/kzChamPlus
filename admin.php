@@ -69,9 +69,8 @@ $artStatus = array(
 	'mod'	=> $plxPlugin->getLang('L_MODERATE')
 );
 /* ------ Listing of extras fields for articles ------- */
-$indices = $plxPlugin->indices();
 $artFields = array();
-foreach($indices as $indice) {
+foreach(array_keys($plxPlugin->indexFields) as $indice) {
 	if($plxPlugin->adminArtDisplay($indice)) {
 		$artFields[$plxPlugin->getParam('name' . $indice)] = $plxPlugin->getParam('label' . $indice);
 	}
