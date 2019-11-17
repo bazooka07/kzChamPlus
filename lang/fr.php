@@ -37,6 +37,17 @@ $LANG = array(
 	'L_NO_INTEGRATION'			=> 'Désactiver l\'intégration automatique des médias',
 	'L_ADD'						=> 'Ajouter un champ',
 	'L_SAVE'					=> 'Enregistrer',
+
+	'L_BOTTOM_ART_PLACE'		=> 'Pied article',
+	'L_SIDEBAR_ART_PLACE'		=> 'sidebar',
+	'L_TOP_ART_PLACE'			=> 'Tête article',
+	'L_BOTTOM_STATIC_PLACE'		=> 'Pied static',
+	'L_TOP_STATIC_PLACE'		=> 'Tête static',
+	'L_BOTTOM_CAT_PLACE'		=> 'Pied catégorie',
+	'L_TOP_CAT_PLACE'			=> 'Tête catégorie',
+	'L_BOTTOM_USER_PLACE'		=> 'Pied utilisateur',
+	'L_TOP_USER_PLACE'			=> 'Tête utilisateur',
+
 	'L_CHAMPART'				=> 'Utiliser le préfixe "champArt" pour les champs des fichiers articles (<em>Déconseillé</em>)',
 	'L_WARNING'					=> <<< 'WARNING'
 <sup>1</sup> Les champs sans nom ne sauront pas sauvegardés<br />

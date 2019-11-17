@@ -61,15 +61,15 @@ class chamPlus extends plxPlugin {
 
 	// pour champArt clés possibles pour $places ; top, side, bot, foot
 	public $places = array(
-		self::BOTTOM_ART	=> 'Pied article',
-		self::SIDEBAR_ART	=> 'sidebar',
-		self::TOP_ART		=> 'Tête article',
-		self::BOTTOM_STATIC	=> 'Pied static',
-		self::TOP_STATIC	=> 'Tête static',
-		self::BOTTOM_CAT	=> 'Pied catégorie',
-		self::TOP_CAT		=> 'Tête catégorie',
-		self::BOTTOM_USER	=> 'Pied utilisateur',
-		self::TOP_USER		=> 'Tête utilisateur'
+		self::BOTTOM_ART	=> 'L_BOTTOM_ART_PLACE',
+		self::SIDEBAR_ART	=> 'L_SIDEBAR_ART_PLACE',
+		self::TOP_ART		=> 'L_TOP_ART_PLACE',
+		self::BOTTOM_STATIC	=> 'L_BOTTOM_STATIC_PLACE',
+		self::TOP_STATIC	=> 'L_TOP_STATIC_PLACE',
+		self::BOTTOM_CAT	=> 'L_BOTTOM_CAT_PLACE',
+		self::TOP_CAT		=> 'L_TOP_CAT_PLACE',
+		self::BOTTOM_USER	=> 'L_BOTTOM_USER_PLACE',
+		self::TOP_USER		=> 'L_TOP_USER_PLACE',
 	);
 	public $artPlaces =		array(self::BOTTOM_ART, self::TOP_ART, self::SIDEBAR_ART);
 	public $staticPlaces =	array(self::BOTTOM_STATIC, self::TOP_STATIC);
@@ -142,7 +142,11 @@ class chamPlus extends plxPlugin {
 					break;
 				case 'plugin' :
 					break;
-				case 'parametres_plugin':
+				case 'parametres_plugin': // parametres_plugin.php?p=__CLASS__
+					// Multi-linguisme
+					foreach($this->places as $k => $v) {
+						$this->places[$k] = $this->getLang($v);
+					}
 					$filename = __dir__ . '/lang/' . $default_lang . '-help.php';
 					if(file_exists($filename)) {
 						$this->helpFile = $filename;
