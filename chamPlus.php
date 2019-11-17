@@ -387,79 +387,24 @@ EOT;
 	const ADMIN_ARTICLE_PARSE_DATA_CODE = <<< 'EOT'
 	$#FIELD_NAME# = $result['#FIELD_NAME#'];
 EOT;
-	public function AdminArticleParseData() {
-		echo '<?php' . PHP_EOL;
-		$entries = array_filter($this->fields, function($value) {
-			return (!empty($value['place']) and in_array($value['place'], $this->artPlaces));
-		});
-		foreach(array_keys($entries) as $key) {
-			$fieldName = self::PREFIX . $key;
-			echo str_replace('#FIELD_NAME#', $fieldName, self::ADMIN_ARTICLE_PARSE_DATA_CODE) . PHP_EOL;
-		}
-		echo '?>' . PHP_EOL;
-	}
-
 	const ADMIN_ARTICLE_PREVIEW_CODE = <<< 'EOT'
 	$art['#FIELD_NAME#'] = $_POST['#FIELD_NAME#'];
 EOT;
-	public function AdminArticlePreview() {
-		echo '<?php' . PHP_EOL;
-		$entries = array_filter($this->fields, function($value) {
-			return (!empty($value['place']) and in_array($value['place'], $this->artPlaces));
-		});
-		foreach(array_keys($entries) as $key) {
-			$fieldName = self::PREFIX . $key;
-			echo str_replace('#FIELD_NAME#', $fieldName, self::ADMIN_ARTICLE_PREVIEW_CODE) . PHP_EOL;
-		}
-		echo '?>' . PHP_EOL;
-	}
-
 	const ADMIN_ARTICLE_POSTDATA_CODE = <<< 'EOT'
 	$#FIELD_NAME# = $_POST['#FIELD_NAME#'];
 EOT;
-	public function AdminArticlePostData() {
-		echo '<?php' . PHP_EOL;
-		$entries = array_filter($this->fields, function($value) {
-			return (!empty($value['place']) and in_array($value['place'], $this->artPlaces));
-		});
-		foreach(array_keys($entries) as $key) {
-			$fieldName = self::PREFIX . $key;
-			echo str_replace('#FIELD_NAME#', $fieldName, self::ADMIN_ARTICLE_POSTDATA_CODE) . PHP_EOL;
-		}
-		echo '?>' . PHP_EOL;
-	}
-
-	// Load the fields of article from XML file
 	const PLXMOTOR_PARSE_ARTICLE_CODE = <<< 'EOT'
 	$art['#FIELD_NAME#'] = (isset($iTags['#FIELD_NAME#'])) ? plxUtils::getValue($values[$iTags['#FIELD_NAME#'][0]]['value']) : '';
 EOT;
-	public function plxMotorParseArticle() {
-		echo '<?php' . PHP_EOL;
-		$entries = array_filter($this->fields, function($value) {
-			return (!empty($value['place']) and in_array($value['place'], $this->artPlaces));
-		});
-		foreach(array_keys($entries) as $key) {
-			$fieldName = self::PREFIX . $key;
-			echo str_replace('#FIELD_NAME#', $fieldName, self::PLXMOTOR_PARSE_ARTICLE_CODE) . PHP_EOL;
-		}
-		echo '?>' . PHP_EOL;
-	}
-
-	// Save the  fields of article to XML file
 	const PLXADMIN_EDIT_ARTICLE_XML_CODE = <<< 'EOT'
 	$xml .= "\t<#FIELD_NAME#><![CDATA[".plxUtils::cdataCheck(trim($content['#FIELD_NAME#']))."]]></#FIELD_NAME#>\n";
 EOT;
-	public function plxAdminEditArticleXml() {
-		echo '<?php' . PHP_EOL;
-		$entries = array_filter($this->fields, function($value) {
-			return (!empty($value['place']) and in_array($value['place'], $this->artPlaces));
-		});
-		foreach(array_keys($entries) as $key) {
-			$fieldName = self::PREFIX . $key;
-			echo str_replace('#FIELD_NAME#', $fieldName, self::PLXADMIN_EDIT_ARTICLE_XML_CODE) . PHP_EOL;
-		}
-		echo '?>' . PHP_EOL;
-	}
+
+	public function AdminArticleParseData()			{ self::_process($this->artPlaces,		self::ADMIN_ARTICLE_PARSE_DATA_CODE); }
+	public function AdminArticlePreview()			{ self::_process($this->artPlaces,		self::ADMIN_ARTICLE_PREVIEW_CODE); }
+	public function AdminArticlePostData()			{ self::_process($this->artPlaces,		self::ADMIN_ARTICLE_POSTDATA_CODE); }
+	public function plxMotorParseArticle()			{ self::_process($this->artPlaces,		self::PLXMOTOR_PARSE_ARTICLE_CODE); }
+	public function plxAdminEditArticleXml()		{ self::_process($this->artPlaces,		self::PLXADMIN_EDIT_ARTICLE_XML_CODE); }
 
 	/* ------------------ statique.php ------------------------- */
 	const PLXMOTOR_GETSTATIQUES_CODE = <<< 'EOT'
