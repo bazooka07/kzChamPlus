@@ -327,7 +327,12 @@ class chamPlus extends plxPlugin {
 						$src = $value;
 						if(!preg_match('@^(?:https?|data):@', $value)) {
 							$src = PLX_ROOT . $value;
-							$src = is_file($src) ? $src : false;
+							if(file_exists($src)) {
+								$thumbName = preg_replace('#\.(jpe?g|png|gif)$#', '.tb.$1', $src);
+								if(file_exists($thumbName)) { $src = $thumbName; }
+							} else {
+								$src = false;
+							}
 						}
 						if($src) {
 							echo <<< EOT
@@ -361,7 +366,7 @@ EOT;
 	public function AdminUser()				{ echo str_replace('#PLACE#', self::BOTTOM_USER,	self::ADMIN_USER_CODE); }
 
 	private function _process($filter, $code) {
-		echo '<?php' . PHP_EOL;
+		echo '<?php ' . PHP_EOL;
 		$entries = array_filter($this->fields, function($value) use($filter) {
 			return (!empty($value['place']) and in_array($value['place'], $filter));
 		});
@@ -369,7 +374,7 @@ EOT;
 			$fieldName = self::PREFIX . $key;
 			echo str_replace('#FIELD_NAME#', $fieldName, $code) . PHP_EOL;
 		}
-		echo '?>' . PHP_EOL;
+		echo ' ?>' . PHP_EOL;
 	}
 	/* ========================== HOOKS for  getting and saving values ========================= */
 
@@ -495,8 +500,31 @@ EOT;
 		)) . PHP_EOL;
 	}
 
-	public function plxShowLastCatListContent() {
 
+	const PLXSHOW_LASTCATLIST_CONTENT_CODE  = <<< 'EOT'
+<?php
+if(preg_match_all('#PATTERN#', $format, $matches)) {
+	$places = array('#PLACES#');
+	$replaces = array();
+	foreach($matches[0] as $k) {
+		if(in_array($k, $places)) {
+			$replaces['#PREFIX#' . $k] = plxUtils::strCheck($art[$k]);
+		}
+	}
+	$name =strtr($name, $replaces);
+}
+?>
+EOT;
+
+	/*
+	 * Unlike plxShow::LastArtList(), this hook is missing in plxShow::catList()
+	 * */
+	public function plxShowLastCatListContent() {
+		echo strtr(self::PLXSHOW_LASTCATLIST_CONTENT_CODE, array(
+			'#PATTERN#'	=> '%#' . self::PREFIX . '_(?:' . implode('|', array_keys($this->fields)). ')%',
+			'#PLACES#'	=> implode('\', \'', $this->catPlaces),
+			'#PREFIX#'	=> '#' . self::PREFIX . '_'
+		)) . PHP_EOL;
 	}
 
 	/* ********************** Hooks spécifiques au plugin ****************** */
