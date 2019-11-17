@@ -1,3 +1,11 @@
+img.chamPlus { cursor: pointer; }
+#chamPlus-modal + .modal__overlay { visibility: hidden; }
+.modal__box {
+	text-align: center;
+	margin-top: 50vh;
+	transform: translateY(-50%);
+}
+#chamPlus-modal:checked + .modal__overlay { visibility: visible; }
 /* ******* config.php ******* */
 #chamPlusConfigForm label {
 	display: inline;

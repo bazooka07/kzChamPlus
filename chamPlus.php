@@ -325,18 +325,22 @@ class chamPlus extends plxPlugin {
 						<div id="id_<?php echo $fieldName; ?>_img">
 						<?php
 						$src = $value;
+						$alt = basename($value);
+						$attr =  '';
 						if(!preg_match('@^(?:https?|data):@', $value)) {
 							$src = PLX_ROOT . $value;
 							if(file_exists($src)) {
 								$thumbName = preg_replace('#\.(jpe?g|png|gif)$#', '.tb.$1', $src);
 								if(file_exists($thumbName)) { $src = $thumbName; }
+								list($width, $height, $type, $attr) = getimagesize($src);
 							} else {
 								$src = false;
 							}
 						}
 						if($src) {
+							$className = __CLASS__;
 							echo <<< EOT
-<img src="$src" title="$value" />\n
+<img src="$src" alt="$alt" class="$className" title="$value"$attr />\n
 EOT;
 						}
 						?>
@@ -379,9 +383,26 @@ EOT;
 	/* ========================== HOOKS for  getting and saving values ========================= */
 
 	/*
+	 * manage overlay for thumbnails.
 	 * Useful scripts for config.php and admin.php
 	 * */
 	public function AdminFootEndBody() {
+		// overlay for thumbnail like medis.php
+		if(in_array(basename($_SERVER['PHP_SELF'], '.php'), array('article', 'statique', 'categorie', 'user'))) {
+			$id = __CLASS__ . '-modal';
+?>
+<div class="modal">
+	<input id="<?php echo $id; ?>" type="checkbox">
+	<div class="modal__overlay">
+		<label for="<?php echo $id; ?>">&#10006;</label>
+		<div id="modal__box" class="modal__box">
+			<img id="<?php echo __CLASS__; ?>-modal-img" />
+		</div>
+	</div>
+</div>
+<?php
+		}
+
 		$src = PLX_PLUGINS . __CLASS__ . '/' . __CLASS__ . '.js';
 ?>
 		<script type="text/javascript" src="<?php echo $src; ?>" data-plugin="<?php echo __CLASS__; ?>"></script>

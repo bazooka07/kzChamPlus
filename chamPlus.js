@@ -1,3 +1,28 @@
+/* ------------ manage overlay for thumbnail in article, statique, categorie, user.php ---- */
+(function() {
+	'use strict';
+
+	const scripts = document.scripts;
+	const plugin = scripts[scripts.length - 1].dataset.plugin; //'<?php echo $plugin; ?>';
+	if(typeof plugin != 'string') {
+		return;
+	}
+
+	const target = document.getElementById(plugin + '-modal-img');
+	if(target != null) {
+		const pattern = /\.tb\.(jpe?g|png|gif)$/;
+		const elements = document.querySelectorAll('form img.' + plugin);
+		for(var i=0, iMax=elements.length; i<iMax; i++) {
+			if(pattern.test(elements[i].src)) {
+				elements[i].addEventListener('click', function(event) {
+					target.src = event.target.src.replace(pattern, ".$1");
+					document.getElementById(plugin + '-modal').click();
+				});
+			}
+
+		}
+	}
+})();
 /* ---------------- config.php ---------------------- */
 (function() {
 	'use strict';
