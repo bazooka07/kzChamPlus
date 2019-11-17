@@ -64,9 +64,15 @@ if(filter_has_var(INPUT_POST, 'name')) {
 		<table class="full-width" data-rows-num='name^="order"'>
 			<thead>
 				<tr>
-<?php	foreach (array_keys($plxPlugin->paramsNames) as $name) { ?>
-				<th><?php $plxPlugin->lang(strtoupper('L_TITLE_'.$name)); ?></th>
-<?php	} ?>
+<?php
+$notes = array('name', 'place');
+foreach (array_keys($plxPlugin->paramsNames) as $name) {
+	$xtra = array_search($name, $notes);
+?>
+				<th><?php $plxPlugin->lang(strtoupper('L_TITLE_'.$name)); if(is_integer($xtra)) echo '<sup>' . ($xtra + 1). '</sup>'?></th>
+<?php
+}
+?>
 				</tr>
 			</thead>
 			<tbody id="<?php echo $plugin; ?>Table"	data-indice="<?php echo $plxPlugin->newIndice(); ?>">

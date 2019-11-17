@@ -14,7 +14,6 @@
  * on peut préciser une chaîne de format pour afficher les champs (mot-clés #name#, #label#, #value#, #group")
  * suppression du fichier d'aide. Voir aide dans panneau de config.
  *
- * Pas de textarea dans les pages statiques !!
  * */
 
 /* changelog
@@ -28,15 +27,13 @@ class chamPlus extends plxPlugin {
 	const PREFIX = 'cps_';
 	const PREFIX2 = 'champArt'; // Articles créés avec le plugin champArt
 
-	const ADMIN_ARTICLE_CODE =
-		'<?php $plxAdmin->plxPlugins->aPlugins[\'' .
-		__CLASS__ .
-		'\']->adminEntry((!empty($result)) ? $result : false, #PLACE#); ?>';
+	const OPEN_CODE = '<?php $plxAdmin->plxPlugins->aPlugins[\'' . __CLASS__ . '\']->adminEntry(';
+	const CLOSE_CODE = ', #PLACE#); ?>';
 
-	const ADMIN_STATIC_CODE =
-		'<?php $plxAdmin->plxPlugins->aPlugins[\'' .
-		__CLASS__ .
-		'\']->adminEntry($plxAdmin->aStats[$id], #PLACE#); ?>';
+	const ADMIN_ARTICLE_CODE =	self::OPEN_CODE . '(!empty($result)) ? $result : false' . self::CLOSE_CODE;
+	const ADMIN_STATIC_CODE =	self::OPEN_CODE . '$plxAdmin->aStats[$id]' .	self::CLOSE_CODE;
+	const ADMIN_CAT_CODE =		self::OPEN_CODE . '$plxAdmin->aCats[$id]'  .	self::CLOSE_CODE;
+	const ADMIN_USER_CODE =		self::OPEN_CODE . '$plxAdmin->aUsers[$id]' .	self::CLOSE_CODE;
 
 	const LIGNE = 3;
 	const BLOCK_TEXT = 1;
@@ -55,6 +52,12 @@ class chamPlus extends plxPlugin {
 	const TOP_ART = 2;
 	const BOTTOM_ART = 3;
 	const SIDEBAR_ART = 4;
+	/* where in the categorie page */
+	const TOP_CAT = 6;
+	const BOTTOM_CAT = 7;
+	/* where in the user page */
+	const TOP_USER = 8;
+	const BOTTOM_USER = 9;
 
 	// pour champArt clés possibles pour $places ; top, side, bot, foot
 	public $places = array(
@@ -63,15 +66,22 @@ class chamPlus extends plxPlugin {
 		self::TOP_ART		=> 'Tête article',
 		self::BOTTOM_STATIC	=> 'Pied static',
 		self::TOP_STATIC	=> 'Tête static',
+		self::BOTTOM_CAT	=> 'Pied catégorie',
+		self::TOP_CAT		=> 'Tête catégorie',
+		self::BOTTOM_USER	=> 'Pied utilisateur',
+		self::TOP_USER		=> 'Tête utilisateur'
 	);
-	public $staticPlaces = array(self::BOTTOM_STATIC, self::TOP_STATIC);
+	public $artPlaces =		array(self::BOTTOM_ART, self::TOP_ART, self::SIDEBAR_ART);
+	public $staticPlaces =	array(self::BOTTOM_STATIC, self::TOP_STATIC);
+	public $catPlaces =		array(self::BOTTOM_CAT, self::TOP_CAT);
+	public $userPlaces =	array(self::BOTTOM_USER, self::TOP_USER);
 
 	public $paramsNames = array(
 		'name' =>	FILTER_SANITIZE_STRING, // nom du champ
 		'label' =>	FILTER_SANITIZE_STRING, // libellé du champ
-		'entry' =>	FILTER_VALIDATE_INT, // type de saisie : ligne, bloc-texte, photo (codé en numérique)
+		'entry' =>	FILTER_VALIDATE_INT,	// type de saisie : ligne, bloc-texte, photo (codé en numérique)
 		'group' =>	FILTER_SANITIZE_STRING,
-		'place' =>	FILTER_VALIDATE_INT // emplacement pour la saisie (codé en numérique)
+		'place' =>	FILTER_VALIDATE_INT		// emplacement pour la saisie (codé en numérique)
 	);
 
 	public $options = array('no_integration', 'champart'); # extended for Pluxml version <= 5.4
@@ -84,24 +94,21 @@ class chamPlus extends plxPlugin {
 		/* ********** hooks inside class.plx.motor.php ******** */
 		$this->addHook('plxMotorParseArticle', 'plxMotorParseArticle');
 		$this->addHook('plxMotorGetStatiques', 'plxMotorGetStatiques');
+		$this->addHook('plxMotorGetCategories', 'plxMotorGetCategories');
+		$this->addHook('plxMotorGetUsers', 'plxMotorGetUsers');
 
 		if(defined('PLX_ADMIN')) {
 			parent::setConfigProfil(PROFIL_ADMIN);
 			parent::setAdminProfil(PROFIL_ADMIN, PROFIL_MANAGER);
 			parent::setAdminMenu($this->getLang('L_TITLE_MENU'), '', $this->getLang('HELP_MENU'));
 
-			/* ******** hooks inside class.plx.admin.php ********** */
-			$this->addHook('plxAdminEditArticleXml', 'plxAdminEditArticleXml');
-			$this->addHook('plxAdminEditStatique', 'plxAdminEditStatique');
-			$this->addHook('plxAdminEditStatiquesUpdate', 'plxAdminEditStatiquesUpdate');
-			$this->addHook('plxAdminEditStatiquesXml', 'plxAdminEditStatiquesXml');
-
 			/* ******** hooks inside top.php ****************** */
 			$this->addHook('AdminFootEndBody', 'AdminFootEndBody');
 
 			switch(basename($_SERVER['PHP_SELF'], '.php')) {
 				case 'article' :
-					/* ******** hooks inside article.php ****************** */
+					/* ******** hooks for article.php ****************** */
+					$this->addHook('plxAdminEditArticleXml', 'plxAdminEditArticleXml');
 					$this->addHook('AdminArticlePreview', 'AdminArticlePreview');
 					$this->addHook('AdminArticlePostData', 'AdminArticlePostData');
 					$this->addHook('AdminArticleParseData', 'AdminArticleParseData');
@@ -110,9 +117,28 @@ class chamPlus extends plxPlugin {
 					$this->addHook('AdminArticleSidebar', 'AdminArticleSidebar');
 					break;
 				case 'statique' :
-					/* ******** hooks inside statique.php ***************** */
+					/* ******** hooks for statique.php ***************** */
+					$this->addHook('plxAdminEditStatique', 'plxAdminEditStatique');
+					$this->addHook('plxAdminEditStatiquesUpdate', 'plxAdminEditStatiquesUpdate');
+					$this->addHook('plxAdminEditStatiquesXml', 'plxAdminEditStatiquesXml');
 					$this->addHook('AdminStaticTop', 'AdminStaticTop');
 					$this->addHook('AdminStatic', 'AdminStatic');
+					break;
+				case 'categorie' :
+					/* ******** hooks for categorie.php ***************** */
+					$this->addHook('plxAdminEditCategorie', 'plxAdminEditCategorie');
+					$this->addHook('plxAdminEditCategoriesUpdate', 'plxAdminEditCategoriesUpdate');
+					$this->addHook('plxAdminEditCategoriesXml', 'plxAdminEditCategoriesXml');
+					$this->addHook('AdminCategoryTop', 'AdminCategoryTop');
+					$this->addHook('AdminCategory', 'AdminCategory');
+					break;
+				case 'user' :
+					/* ******** hooks for user.php ***************** */
+					$this->addHook('plxAdminEditUser', 'plxAdminEditUser');
+					$this->addHook('plxAdminEditUsersUpdate', 'plxAdminEditUsersUpdate');
+					$this->addHook('plxAdminEditUsersXml', 'plxAdminEditUsersXml');
+					$this->addHook('AdminUserTop', 'AdminUserTop');
+					$this->addHook('AdminUser', 'AdminUser');
 					break;
 				case 'plugin' :
 					break;
@@ -127,6 +153,7 @@ class chamPlus extends plxPlugin {
 			/* ********** hooks inside class.plx.show.php ******** */
 			if (defined('PLX_VERSION') and version_compare(PLX_VERSION, '5.5', '>=')) {
 				$this->addHook('plxShowLastArtListContent', 'plxShowLastArtListContent');
+				$this->addHook('plxShowLastCatListContent', 'plxShowLastCatListContent');
 			}
 
 			/* ********** Use these hooks for your theme ********* */
@@ -135,7 +162,7 @@ class chamPlus extends plxPlugin {
 			// renvoie tous les champs sous forme de tableau
 			$this->addHook('chamPlusList', 'chamPlusList');
 
-			/* ******* compatibilté avec le plugin champArt  ****** */
+			/* ******* compatibilité pour les thèmes dédiés au plugin champArt  ****** */
 			$this->addHook('champArt', 'champArt');
 		}
 	}
@@ -191,11 +218,12 @@ class chamPlus extends plxPlugin {
 	}
 
 	public function adminArtDisplay($indice) {
-		return !in_array($this->getParam('place' . $indice), array(self::TOP_STATIC, self::BOTTOM_STATIC));
+		return in_array($this->indexFields[$indice]['place'], $this->artPlaces);
 	}
 
 	/*
-	 * Imprime les rangées du tableau dans config.php
+	 * For config.php. Add row in the table for a field with attributes for every key of $this->paramsNames :
+	 * name, label entry, place, group, ...
 	 * */
 	public function printFieldConfig($indice) {
 ?>
@@ -205,7 +233,6 @@ class chamPlus extends plxPlugin {
 			// $value = (empty($new)) ? plxUtils::strCheck($this->getParam($name . $indice)) : '';
 			$value = (array_key_exists($name, $this->indexFields[$indice])) ? $this->indexFields[$indice][$name] : '';
 			$field = $name . '[' . $indice . ']';
-			// $keyword = 'L_CHAMPLUS_' . $name;
 ?>
 					<td>
 <?php
@@ -234,7 +261,7 @@ class chamPlus extends plxPlugin {
 	}
 
 	/*
-	 * Affiche l'édition d'un champ dans une page statique ou dans un article
+	 * insert fields into several pages
 	 * */
 	public function adminEntry($data, $place=self::BOTTOM_ART) {
 		$entries = array_filter($this->fields, function($value) use($place) {
@@ -244,16 +271,24 @@ class chamPlus extends plxPlugin {
 			$fieldName = self::PREFIX . $key;
 			$caption = $params['label'];
 			$value = (!empty($data) and array_key_exists($fieldName, $data)) ? $data[$fieldName] : '';
-			if($place != self::TOP_STATIC and $place != self::BOTTOM_STATIC) { // article
+
+			# default values
+			$cols = 35;
+			$rows = 8;
+			$size = '';
+			$className = 'full-width';
+
+			if(in_array($place, $this->artPlaces)) { // article
 				$size = ($place == self::SIDEBAR_ART) ? '27-255' : '42-255';
-				$cols = 35;
-				$rows = 8;
 				$className = ($place == self::SIDEBAR_ART) ? '' : 'full-width';
-			} else { // static page - no sidebar !
+			} elseif(in_array($place, $this->staticPlaces)) { // static page - no sidebar !
 				$size = '50-255';
-				$className = 'full-width';
-				$cols = 35;
-				$rows = 8;
+			} elseif(in_array($place, $this->catPlaces)) {
+				// nothing to do
+			} elseif(in_array($place, $this->userPlaces)) {
+				// nothing to do
+			} else {
+				return; // Bye !!!
 			}
 ?>
 				<div class="grid">
@@ -307,7 +342,36 @@ EOT;
 		}
 	}
 
-	/* ========================== HOOKS ========================= */
+	// Add fields in article.php
+	public function AdminArticleTop()		{ echo str_replace('#PLACE#', self::TOP_ART,		self::ADMIN_ARTICLE_CODE); }
+	public function AdminArticleContent()	{ echo str_replace('#PLACE#', self::BOTTOM_ART,		self::ADMIN_ARTICLE_CODE); }
+	public function AdminArticleSidebar()	{ echo str_replace('#PLACE#', self::SIDEBAR_ART,	self::ADMIN_ARTICLE_CODE); }
+	// Add fields in statique.php
+	public function AdminStaticTop() 		{ echo str_replace('#PLACE#', self::TOP_STATIC,		self::ADMIN_STATIC_CODE); }
+	public function AdminStatic()			{ echo str_replace('#PLACE#', self::BOTTOM_STATIC,	self::ADMIN_STATIC_CODE); }
+	// Add fields in categorie.php
+	public function AdminCategoryTop() 		{ echo str_replace('#PLACE#', self::TOP_CAT,		self::ADMIN_CAT_CODE); }
+	public function AdminCategory()			{ echo str_replace('#PLACE#', self::BOTTOM_CAT,		self::ADMIN_CAT_CODE); }
+	// Add fields in user.php
+	public function AdminUserTop() 			{ echo str_replace('#PLACE#', self::TOP_USER,		self::ADMIN_USER_CODE); }
+	public function AdminUser()				{ echo str_replace('#PLACE#', self::BOTTOM_USER,	self::ADMIN_USER_CODE); }
+
+	private function _process($filter, $code) {
+		echo '<?php' . PHP_EOL;
+		$entries = array_filter($this->fields, function($value) use($filter) {
+			return (!empty($value['place']) and in_array($value['place'], $filter));
+		});
+		foreach(array_keys($entries) as $key) {
+			$fieldName = self::PREFIX . $key;
+			echo str_replace('#FIELD_NAME#', $fieldName, $code) . PHP_EOL;
+		}
+		echo '?>' . PHP_EOL;
+	}
+	/* ========================== HOOKS for  getting and saving values ========================= */
+
+	/*
+	 * Useful scripts for config.php and admin.php
+	 * */
 	public function AdminFootEndBody() {
 		$src = PLX_PLUGINS . __CLASS__ . '/' . __CLASS__ . '.js';
 ?>
@@ -316,13 +380,13 @@ EOT;
 	}
 
 	/* -------------------- article.php ------------------------ */
-	const ADMIN_ARTICLE_PARSE_DATA_CODE = <<< 'ADMIN_ARTICLE_PARSE_DATA_CODE'
+	const ADMIN_ARTICLE_PARSE_DATA_CODE = <<< 'EOT'
 	$#FIELD_NAME# = $result['#FIELD_NAME#'];
-ADMIN_ARTICLE_PARSE_DATA_CODE;
+EOT;
 	public function AdminArticleParseData() {
 		echo '<?php' . PHP_EOL;
 		$entries = array_filter($this->fields, function($value) {
-			return (!empty($value['place']) and !in_array($value['place'], $this->staticPlaces));
+			return (!empty($value['place']) and in_array($value['place'], $this->artPlaces));
 		});
 		foreach(array_keys($entries) as $key) {
 			$fieldName = self::PREFIX . $key;
@@ -331,13 +395,13 @@ ADMIN_ARTICLE_PARSE_DATA_CODE;
 		echo '?>' . PHP_EOL;
 	}
 
-	const ADMIN_ARTICLE_PREVIEW_CODE = <<< 'ADMIN_ARTICLE_PREVIEW_CODE'
+	const ADMIN_ARTICLE_PREVIEW_CODE = <<< 'EOT'
 	$art['#FIELD_NAME#'] = $_POST['#FIELD_NAME#'];
-ADMIN_ARTICLE_PREVIEW_CODE;
+EOT;
 	public function AdminArticlePreview() {
 		echo '<?php' . PHP_EOL;
 		$entries = array_filter($this->fields, function($value) {
-			return (!empty($value['place']) and !in_array($value['place'], $this->staticPlaces));
+			return (!empty($value['place']) and in_array($value['place'], $this->artPlaces));
 		});
 		foreach(array_keys($entries) as $key) {
 			$fieldName = self::PREFIX . $key;
@@ -346,13 +410,13 @@ ADMIN_ARTICLE_PREVIEW_CODE;
 		echo '?>' . PHP_EOL;
 	}
 
-	const ADMIN_ARTICLE_POSTDATA_CODE = <<< 'ADMIN_ARTICLE_POSTDATA_CODE'
+	const ADMIN_ARTICLE_POSTDATA_CODE = <<< 'EOT'
 	$#FIELD_NAME# = $_POST['#FIELD_NAME#'];
-ADMIN_ARTICLE_POSTDATA_CODE;
+EOT;
 	public function AdminArticlePostData() {
 		echo '<?php' . PHP_EOL;
 		$entries = array_filter($this->fields, function($value) {
-			return (!empty($value['place']) and !in_array($value['place'], $this->staticPlaces));
+			return (!empty($value['place']) and in_array($value['place'], $this->artPlaces));
 		});
 		foreach(array_keys($entries) as $key) {
 			$fieldName = self::PREFIX . $key;
@@ -361,22 +425,14 @@ ADMIN_ARTICLE_POSTDATA_CODE;
 		echo '?>' . PHP_EOL;
 	}
 
-	// Add fields in article.php
-	public function AdminArticleTop()		{ echo str_replace('#PLACE#', self::TOP_ART,		self::ADMIN_ARTICLE_CODE); }
-	public function AdminArticleContent()	{ echo str_replace('#PLACE#', self::BOTTOM_ART,		self::ADMIN_ARTICLE_CODE); }
-	public function AdminArticleSidebar()	{ echo str_replace('#PLACE#', self::SIDEBAR_ART,	self::ADMIN_ARTICLE_CODE); }
-	// Add fields in statique.php
-	public function AdminStaticTop() 		{ echo str_replace('#PLACE#', self::TOP_STATIC,		self::ADMIN_STATIC_CODE); }
-	public function AdminStatic()			{ echo str_replace('#PLACE#', self::BOTTOM_STATIC,	self::ADMIN_STATIC_CODE); }
-
 	// Load the fields of article from XML file
-	const PLXMOTOR_PARSE_ARTICLE_CODE = <<< 'PLXMOTOR_PARSE_ARTICLE_CODE'
+	const PLXMOTOR_PARSE_ARTICLE_CODE = <<< 'EOT'
 	$art['#FIELD_NAME#'] = (isset($iTags['#FIELD_NAME#'])) ? plxUtils::getValue($values[$iTags['#FIELD_NAME#'][0]]['value']) : '';
-PLXMOTOR_PARSE_ARTICLE_CODE;
+EOT;
 	public function plxMotorParseArticle() {
 		echo '<?php' . PHP_EOL;
 		$entries = array_filter($this->fields, function($value) {
-			return (!empty($value['place']) and !in_array($value['place'], $this->staticPlaces));
+			return (!empty($value['place']) and in_array($value['place'], $this->artPlaces));
 		});
 		foreach(array_keys($entries) as $key) {
 			$fieldName = self::PREFIX . $key;
@@ -386,13 +442,13 @@ PLXMOTOR_PARSE_ARTICLE_CODE;
 	}
 
 	// Save the  fields of article to XML file
-	const PLXADMIN_EDIT_ARTICLE_XML_CODE = <<< 'PLXADMIN_EDIT_ARTICLE_XML_CODE'
+	const PLXADMIN_EDIT_ARTICLE_XML_CODE = <<< 'EOT'
 	$xml .= "\t<#FIELD_NAME#><![CDATA[".plxUtils::cdataCheck(trim($content['#FIELD_NAME#']))."]]></#FIELD_NAME#>\n";
-PLXADMIN_EDIT_ARTICLE_XML_CODE;
+EOT;
 	public function plxAdminEditArticleXml() {
 		echo '<?php' . PHP_EOL;
 		$entries = array_filter($this->fields, function($value) {
-			return (!empty($value['place']) and !in_array($value['place'], $this->staticPlaces));
+			return (!empty($value['place']) and in_array($value['place'], $this->artPlaces));
 		});
 		foreach(array_keys($entries) as $key) {
 			$fieldName = self::PREFIX . $key;
@@ -401,89 +457,97 @@ PLXADMIN_EDIT_ARTICLE_XML_CODE;
 		echo '?>' . PHP_EOL;
 	}
 
-	// load data from statiques.xml in class.plx.motor
-	const PLXMOTOR_GETSTATIQUES_CODE = <<< 'PLXMOTOR_GETSTATIQUES_CODE'
+	/* ------------------ statique.php ------------------------- */
+	const PLXMOTOR_GETSTATIQUES_CODE = <<< 'EOT'
 	$f = '#FIELD_NAME#';
 	$value = (array_key_exists($f, $iTags)) ? plxUtils::getValue($values[$iTags[$f][$i]]['value']) : '';
 	$this->aStats[$number][$f] = $value;
-PLXMOTOR_GETSTATIQUES_CODE;
-	public function plxMotorGetStatiques() {
-		echo '<?php' . PHP_EOL;
-		$entries = array_filter($this->fields, function($value) {
-			return (!empty($value['place']) and in_array($value['place'], $this->staticPlaces));
-		});
-		foreach(array_keys($entries) as $key) {
-			$fieldName = self::PREFIX . $key;
-			echo str_replace('#FIELD_NAME#', $fieldName, self::PLXMOTOR_GETSTATIQUES_CODE) . PHP_EOL;
-		}
-		echo '?>' . PHP_EOL;
-	}
-
-	const PLXADMIN_EDITSTATIQUE_CODE = <<< 'PLXADMIN_EDITSTATIQUE_CODE'
-		$this->aStats[\$content['id']]['#FIELD_NAME#'] = $content['#FIELD_NAME#'];
-PLXADMIN_EDITSTATIQUE_CODE;
-	public function plxAdminEditStatique() {
-		echo '<?php' . PHP_EOL;
-		$entries = array_filter($this->fields, function($value) {
-			return (!empty($value['place']) and in_array($value['place'], $this->staticPlaces));
-		});
-		foreach(array_keys($entries) as $key) {
-			$fieldName = self::PREFIX . $key;
-			echo str_replace('#FIELD_NAME#', $fieldName, self::PLXADMIN_EDITSTATIQUE_CODE) . PHP_EOL;
-		}
-		echo '?>' . PHP_EOL;
-	}
-
-	const PLXADMIN_EDITSTATIQUES_UPDATE_CODE = <<< 'PLXADMIN_EDITSTATIQUES_UPDATE_CODE'
+EOT;
+	const PLXADMIN_EDITSTATIQUE_CODE = <<< 'EOT'
+		$this->aStats[$content['id']]['#FIELD_NAME#'] = $content['#FIELD_NAME#'];
+EOT;
+	// A revoir
+	const PLXADMIN_EDITSTATIQUES_UPDATE_CODE = <<< 'EOT'
 	$this->aStats[$static_id]['#FIELD_NAME#'] = (isset($this->aStats[$static_id]['#FIELD_NAME#']) ? $this->aStats[$static_id]['#FIELD_NAME#'] : '');
-PLXADMIN_EDITSTATIQUES_UPDATE_CODE;
-	public function plxAdminEditStatiquesUpdate() {
-		echo '<?php' . PHP_EOL;
-		$entries = array_filter($this->fields, function($value) {
-			return (!empty($value['place']) and in_array($value['place'], $this->staticPlaces));
-		});
-		foreach(array_keys($entries) as $key) {
-			$fieldName = self::PREFIX . $key;
-			echo str_replace('#FIELD_NAME#', $fieldName, self::PLXADMIN_EDITSTATIQUES_UPDATE_CODE) . PHP_EOL;
-		}
-		echo '?>' . PHP_EOL;
-	}
-
-	const PLXADMIN_EDITSTATIQUES_XML_CODE = <<< 'PLXADMIN_EDITSTATIQUES_XML_CODE'
+EOT;
+	const PLXADMIN_EDITSTATIQUES_XML_CODE = <<< 'EOT'
 	$xml .= "<#FIELD_NAME#><![CDATA[".plxUtils::cdataCheck($static['#FIELD_NAME#'])."]]></#FIELD_NAME#>";
-PLXADMIN_EDITSTATIQUES_XML_CODE;
-	public function plxAdminEditStatiquesXml() {
-		echo '<?php' . PHP_EOL;
-		$entries = array_filter($this->fields, function($value) {
-			return (!empty($value['place']) and in_array($value['place'], $this->staticPlaces));
-		});
-		foreach(array_keys($entries) as $key) {
-			$fieldName = self::PREFIX . $key;
-			echo str_replace('#FIELD_NAME#', $fieldName, self::PLXADMIN_EDITSTATIQUES_XML_CODE) . PHP_EOL;
-		}
-		echo '?>' . PHP_EOL;
-	}
+EOT;
 
-	const PLXSHOW_LASTARTLIST_CONTENT_CODE = <<< 'PLXSHOW_LASTARTLIST_CONTENT_CODE'
+	public function plxMotorGetStatiques()			{ self::_process($this->staticPlaces,	self::PLXMOTOR_GETSTATIQUES_CODE); }
+	public function plxAdminEditStatique()			{ self::_process($this->staticPlaces,	self::PLXADMIN_EDITSTATIQUE_CODE); }
+	public function plxAdminEditStatiquesUpdate()	{ self::_process($this->staticPlaces,	self::PLXADMIN_EDITSTATIQUES_UPDATE_CODE); }
+	public function plxAdminEditStatiquesXml()		{ self::_process($this->staticPlaces,	self::PLXADMIN_EDITSTATIQUES_XML_CODE); }
+
+	/* ------------------ categorie.php ------------------------- */
+	const PLXMOTOR_GETCATEGORIES_CODE = <<< 'EOT'
+	$f = '#FIELD_NAME#';
+	$value = (array_key_exists($f, $iTags)) ? plxUtils::getValue($values[$iTags[$f][$i]]['value']) : '';
+	$this->aCats[$number][$f] = $value;
+EOT;
+	const PLXADMIN_EDITCATEGORIE_CODE = <<< 'EOT'
+		$this->aCats[$content['id']]['#FIELD_NAME#'] = $content['#FIELD_NAME#'];
+EOT;
+	// A revoir
+	const PLXADMIN_EDITCATEGORIES_UPDATE_CODE = <<< 'EOT'
+	$this->aCats[$cat_id]['#FIELD_NAME#'] = (isset($this->aCats[$cat_id]['#FIELD_NAME#']) ? $this->->aCats[$cat_id]['#FIELD_NAME#'] : '');
+EOT;
+
+	const PLXADMIN_EDITCATEGORIES_XML_CODE = <<< 'EOT'
+	$xml .= "<#FIELD_NAME#><![CDATA[".plxUtils::cdataCheck($cat['#FIELD_NAME#'])."]]></#FIELD_NAME#>";
+EOT;
+
+	public function plxMotorGetCategories()			{ self::_process($this->catPlaces,		self::PLXMOTOR_GETCATEGORIES_CODE); }
+	public function plxAdminEditCategorie()			{ self::_process($this->catPlaces,		self::PLXADMIN_EDITCATEGORIE_CODE); }
+	public function plxAdminEditCategoriesUpdate()	{ self::_process($this->catPlaces,		self::PLXADMIN_EDITCATEGORIES_UPDATE_CODE); }
+	public function plxAdminEditCategoriesXml()		{ self::_process($this->catPlaces,		self::PLXADMIN_EDITCATEGORIES_XML_CODE); }
+
+	/* ------------------ user.php ------------------------- */
+	const PLXMOTOR_GETUSERS_CODE = <<< 'EOT'
+	$f = '#FIELD_NAME#';
+	$value = (array_key_exists($f, $iTags)) ? plxUtils::getValue($values[$iTags[$f][$i]]['value']) : '';
+	$this->aUsers[$number][$f] = $value;
+EOT;
+	const PLXADMIN_EDITUSER_CODE = <<< 'EOT'
+		$this->aUsers[$content['id']]['#FIELD_NAME#'] = $content['#FIELD_NAME#'];
+EOT;
+	const PLXADMIN_EDITUSERS_UPDATE_CODE = <<< 'EOT'
+EOT;
+	const PLXADMIN_EDITUSERS_XML_CODE = <<< 'EOT'
+	$xml .= "<#FIELD_NAME#><![CDATA[".plxUtils::cdataCheck($user['#FIELD_NAME#'])."]]></#FIELD_NAME#>";
+EOT;
+
+	public function plxMotorGetUsers()			{ self::_process($this->userPlaces,		self::PLXMOTOR_GETUSERS_CODE); }
+	public function plxAdminEditUser()			{ self::_process($this->userPlaces,		self::PLXADMIN_EDITUSER_CODE); }
+	public function plxAdminEditUsersUpdate()	{ self::_process($this->userPlaces,		self::PLXADMIN_EDITUSERS_UPDATE_CODE); }
+	public function plxAdminEditUsersXml()		{ self::_process($this->userPlaces,		self::PLXADMIN_EDITUSERS_XML_CODE); }
+
+	/* ------------------ Hooks for plxShow ---------------- */
+
+	const PLXSHOW_LASTARTLIST_CONTENT_CODE = <<< 'EOT'
 <?php
 if(preg_match_all('#PATTERN#', $format, $matches)) {
-	$staticPlaces = array('#STATIC_PLACES#');
+	$places = array('#PLACES#');
 	$replaces = array();
 	foreach($matches[0] as $k) {
-		if(!in_array($k, $staticPlaces)) {
+		if(in_array($k, $places)) {
 			$replaces['#PREFIX#' . $k] = plxUtils::strCheck($art[$k]);
 		}
 	}
 	$row = strtr($row, $replaces);
 }
 ?>
-PLXSHOW_LASTARTLIST_CONTENT_CODE;
+EOT;
 	public function plxShowLastArtListContent() {
 		echo strtr(self::PLXSHOW_LASTARTLIST_CONTENT_CODE, array(
-			'#PATTERN#'			=> '%#' . self::PREFIX . '_(?:' . implode('|', array_keys($this->fields)). ')%',
-			'#STATIC_PLACES#'	=> implode('\', \'', $this->staticPlaces),
-			'#PREFIX#'			=> '#' . self::PREFIX . '_'
+			'#PATTERN#'	=> '%#' . self::PREFIX . '_(?:' . implode('|', array_keys($this->fields)). ')%',
+			'#PLACES#'	=> implode('\', \'', $this->artPlaces),
+			'#PREFIX#'	=> '#' . self::PREFIX . '_'
 		)) . PHP_EOL;
+	}
+
+	public function plxShowLastCatListContent() {
+
 	}
 
 	/* ********************** Hooks spécifiques au plugin ****************** */
@@ -512,7 +576,7 @@ PLXSHOW_LASTARTLIST_CONTENT_CODE;
 			return;
 		}
 
-		if(!array_key_exists($name, $this->$fields)) {
+		if(!array_key_exists($name, $this->fields)) {
 			echo $params . $this->getLang('L_BAD_VALUE');
 			return;
 		}
@@ -572,47 +636,61 @@ EOT;
 		return false;
 	}
 
-	public function chamPlusList($pretty_print=false) {
-		if($pretty_print) {
+	public function chamPlusList($param=false) {
+		if(!is_string($param)) {
 ?>
 <table class="<?php echo __CLASS__; ?>">
+	<caption class="text-center"><?php echo __CLASS__; ?> plugin</caption>
 	<thead>
 		<tr>
-<?php	foreach(array_keys($plxPlugin->paramsNames) as $name) { ?>
-			<th><?php $plxPlugin->lang(strtoupper('L_CHAMPLUS_TITLE_'.$name)); ?></th>
-<?php	} ?>
+<?php
+			foreach(array_keys($this->paramsNames) as $name) { ?>
+			<th><?php $this->lang(strtoupper('L_TITLE_'.$name)); ?></th>
+<?php
+			}
+?>
 	</tr></thead>
 	<tbody>
 <?php
-	foreach(array_keys($plxPlugin->indexFields) as $i) {
+			foreach(array_keys($this->indexFields) as $indice) {
 ?>
 				<tr>
 <?php
-		foreach(array_keys($this->paramsNames) as $name) {
-			$value = $this->$indexFields[$indice][$name];
-			if(empty($value)) { $value = '&nbsp;'; }
+				foreach(array_keys($this->paramsNames) as $name) {
+					$value = (array_key_exists($name, $this->indexFields[$indice])) ? $this->indexFields[$indice][$name] : false;
 ?>
 					<td>
 <?php
-			switch($name) {
-				case 'entry':	echo $this->fieldTypes[$value]; break;
-				case 'place':	echo $this->places[$value]; break;
-				default:		echo $value;
-			}
+					switch($name) {
+						case 'entry':	echo (!empty($value)) ? $this->fieldTypes[$value] : '&nbsp;'; break;
+						case 'place':	echo (!empty($value)) ? $this->places[$value] : '&nbsp;';  break;
+						default:		echo (!empty($value)) ? $value : '&nbsp;';
+					}
 ?>
 					</td>
 <?php
-		}
+				}
 ?>
 				</tr>
 <?php
-	}
+			}
 ?>
 	</tbody>
 </table>
 <?php
 		} else {
-			return $this->fields;
+			$content = array();
+			foreach($this->fields as $name=>$fiche) {
+				$buf = array();
+				foreach(array_keys($this->paramsNames) as $k) {
+					if(array_key_exists($k, $fiche)) {
+						$value = addslashes($fiche[$k]);
+						$buf[] = "'$k' => '$value'";
+					}
+				}
+				$content[] = "'$name' => array(". implode(',', $buf) .')';
+			}
+			echo '<?php $output = array(' .  implode(',', $content) . '); ?>';
 		}
 	}
 
@@ -625,10 +703,12 @@ EOT;
 	public function champArt($param) {
 		if(preg_match('#(' . implode('|', array_keys($this->fields)). ')(?:_(L|R))?$#i', $param, $matches)) {
 			$nameField = $matches[1];
-			if(array_key_exists($nameField, $this->fields) and !in_array($this->fields[$nameField]['entry'], $this->staticPlaces)) {
+			if(array_key_exists($nameField, $this->fields) and in_array($this->fields[$nameField]['entry'], $this->artPlaces)) {
 				$value = $value = $plxMotor->plxRecord_arts->f(self::PREFIX . $nameField);
 				if(empty($matches[2])) {
 					echo $value;
+				} elseif(!in_array($param, $this->artPlaces)) {
+					echo PHP_EOL . "<strong>$param is not a field for articles</strong>" . PHP_EOL;
 				} else {
 					switch(strtoupper($matches[2])) {
 						case 'L' :
@@ -638,7 +718,7 @@ EOT;
 EOT;
 							break;
 						case 'R' :
-							return $value;
+							echo "<?php \$$param = '$value'; ?>" . PHP_EOL;
 							break;
 					}
 				}
