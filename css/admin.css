@@ -1,7 +1,9 @@
+/* ******* config.php ******* */
 #chamPlusConfigForm label {
 	display: inline;
 }
 
+#chamPlusConfigForm th:not(.select1) { min-width: 16rem; }
 #chamPlusConfigForm .in-action-bar { z-index: 999; }
 #chamPlusConfigForm tbody td:nth-of-type(3),
 #chamPlusConfigForm tbody td:nth-of-type(5) {
@@ -77,45 +79,6 @@
 #chamPlus-medias-close {
 	position: absolute;
 	right: 0;
-}
-
-/* ***** article.php *************** */
-#form_article .sidebar span.cps-medias,
-#form_article .sidebar span.cps-preview {
-	margin: 0 5px;
-	padding: 0 10px;
-	border-radius: 5px;
-	background-color: lightgray;
-	cursor: pointer;
-}
-#cpsPreviewMedia .close:hover,
-#form_article .sidebar span.cps-medias:hover,
-#form_article .sidebar span.cps-preview:hover {
-	background-color: lightblue;
-}
-#cpsPreviewMedia {
-	display: none;
-	position: fixed;
-	bottom: 5px;
-	right: 5px;
-	min-width: 50px;
-	min-height: 25px;
-	z-index: 10000;
-	background-color: lightgray;
-	padding: 5px;
-	border-radius: 8px;
-}
-#cpsPreviewMedia.visible {
-	display: block;
-}
-#cpsPreviewMedia .close {
-	position: absolute;
-	top: 10px;
-	right: 10px;
-	padding: 2px;
-	background-color: #fff;
-	cursor: pointer;
-	font-weight: bold;
 }
 
 /* ************ admin.php *********** */

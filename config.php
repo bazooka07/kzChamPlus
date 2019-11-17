@@ -60,16 +60,17 @@ if(filter_has_var(INPUT_POST, 'name')) {
 ?>
 	<form id="<?php echo $plugin; ?>ConfigForm" method="post"> <!--  action="/variables.php" -->
 		<?php echo plxToken::getTokenPostMethod() ?>
-		<fieldset>
-		<table class="full-width" data-rows-num='name^="order"'>
+		<div class="scrollable-table"><table class="full-width" data-rows-num='name^="order"'>
 			<thead>
 				<tr>
 <?php
 $notes = array('name', 'place');
+$selects = array('entry', 'place');
 foreach (array_keys($plxPlugin->paramsNames) as $name) {
 	$xtra = array_search($name, $notes);
+	$className = (in_array($name, $selects)) ? ' class="select1"' : '';
 ?>
-				<th><?php $plxPlugin->lang(strtoupper('L_TITLE_'.$name)); if(is_integer($xtra)) echo '<sup>' . ($xtra + 1). '</sup>'?></th>
+				<th<?php echo $className; ?>><?php $plxPlugin->lang(strtoupper('L_TITLE_'.$name)); if(is_integer($xtra)) echo '<sup>' . ($xtra + 1). '</sup>'?></th>
 <?php
 }
 ?>
@@ -82,7 +83,8 @@ foreach (array_keys($plxPlugin->paramsNames) as $name) {
 	}
 ?>
 			</tbody>
-		</table>
+		</table></div>
+
 		<div>
 <?php
 		foreach($plxPlugin->options as $k) {
@@ -94,7 +96,6 @@ foreach (array_keys($plxPlugin->paramsNames) as $name) {
 			</p>
 <?php	} ?>
 		</div>
-		</fieldset>
 		<div class="in-action-bar">
 <?php
 if(!empty($plxPlugin->helpFile)) {

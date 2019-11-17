@@ -84,7 +84,7 @@ class chamPlus extends plxPlugin {
 		'place' =>	FILTER_VALIDATE_INT		// emplacement pour la saisie (codé en numérique)
 	);
 
-	public $options = array('no_integration', 'champart'); # extended for Pluxml version <= 5.4
+	public $options = array('no_integration' /*, 'champart'*/ ); # extended for Pluxml version <= 5.4
 
 	public $order = 0;
 
