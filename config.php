@@ -5,15 +5,21 @@ if(!defined('PLX_ROOT')) { exit; }
 plxToken::validateFormToken($_POST);
 
 if(filter_has_var(INPUT_POST, 'import')) {
-	$other = filter_input(INPUT_POST, 'import', FILTER_SANITIZE_STRING) {
-
+	$other = filter_input(INPUT_POST, 'import', FILTER_SANITIZE_STRING);
+	$filename = __DIR__ . "/import/$other.php";
+	if(!empty($other)) {
+		if(file_exists($filename)) {
+			include $filename;
+			header('Location: parametres_plugin.php?p=' . $plugin);
+			exit;
+		}
 	}
 }
 
 if(filter_has_var(INPUT_POST, 'name')) {
 
 	$reqs = array();
-	foreach($plxPlugin->paramsNames as $name=>$filter) {
+	foreach(array_merge($plxPlugin->paramsNames, array('order'=>FILTER_VALIDATE_INT)) as $name=>$filter) {
 		$reqs[$name] = filter_input(INPUT_POST, $name, $filter, FILTER_REQUIRE_ARRAY);
 		if($name == 'name' and empty($reqs['name']) and !is_array($reqs['name'])) {
 			header('Location: parametres_plugin.php?p=' . $plugin);
@@ -21,10 +27,12 @@ if(filter_has_var(INPUT_POST, 'name')) {
 		}
 	}
 
+	$orders = array();
 	$names = array_map('trim' , $reqs['name']);
 	foreach($names as $indice=>$name) {
 		if(!empty($name)) {
 			$plxPlugin->setParam('name' . $indice, preg_replace('#[\s-]+#', '_', $name), 'string');
+			$mass[$indice] = (!empty($reqs['order'][$indice])) ? intval($reqs['order'][$indice]) : -1;
 			foreach(array_keys($plxPlugin->paramsNames) as $n) {
 				if($n == 'name') { continue; }
 				$param = $n . $indice;
@@ -49,6 +57,7 @@ if(filter_has_var(INPUT_POST, 'name')) {
 			}
 		}
 	}
+	$plxPlugin->orderConfig = $orders;
 
 	// input[type="checkbox"]
 	foreach($plxPlugin->options as $k) {
@@ -131,29 +140,42 @@ if(!empty($plxPlugin->helpFile)) {
 
 $otherConfigs = $plxPlugin->importConfigList();
 if(!empty($otherConfigs)) {
+	$id = 'import-dialog';
 ?>
-	<div id="<?php echo $plugin; ?>-config">
-		<p>Importer une config</p>
-		<form method="post">
-			<?php echo plxToken::getTokenPostMethod() ?>
-			<ul>
+<!-- Hack against PluCss -->
+<style type="text/css">
+	.modal .modal-container label { color: #000; }
+	.modal-container input { position: initial; }
+	.in-action-bar { z-index: 780; }
+</style>
+<div class="modal">
+	<input id="<?php echo $id; ?>" type="checkbox" checked />
+	<div class="modal__overlay">
+		<label for="<?php echo $id; ?>">&#10006;</label>
+		<div id="modal__box" class="modal__box">
+			<form name="<?php echo $plugin; ?>ConfigImport" method="post" class="inline-form modal-container">
+				<?php echo plxToken::getTokenPostMethod() ?>
+				<div class="modal-caption"><?php $plxPlugin->lang('L_IMPORT_PLUGIN'); ?></div>
+				<ul class="unstyled-list">
 <?php
-	foreach($otherConfigs as $config) {
-		$id = 'id_' . $config;
+		foreach($otherConfigs as $config) {
+			$id = 'id_' . $config;
 ?>
-				<li>
-					<input type="radio" id="<?php echo $id; ?>" name="import" value="<?php echo $config; ?>">
-					<label for="<?php echo $id; ?>"><?php echo $config; ?></label>
-				</li>
+					<li>
+						<input type="radio" id="<?php echo $id; ?>" name="import" value="<?php echo $config; ?>">
+						<label for="<?php echo $id; ?>"><?php echo $config; ?></label>
+					</li>
 <?php
-	}
+		}
 ?>
-			</ul>
-			<div>
-				<input type="submit" />
-			</div>
-		</form>
+				</ul>
+				<div>
+					<input type="submit" id="<?php echo $plugin; ?>ImportBtn" />
+				</div>
+			</form>
+		</div>
 	</div>
+</div>
 <?php
 }
 ?>

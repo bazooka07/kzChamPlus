@@ -76,12 +76,15 @@ class kzChamPlus extends plxPlugin {
 	public $catPlaces =		array(self::BOTTOM_CAT, self::TOP_CAT);
 	public $userPlaces =	array(self::BOTTOM_USER, self::TOP_USER);
 
+	// Check self::loadParams and self::printFieldConfig for new fields
 	public $paramsNames = array(
 		'name' =>	FILTER_SANITIZE_STRING, // nom du champ
 		'label' =>	FILTER_SANITIZE_STRING, // libellé du champ
 		'entry' =>	FILTER_VALIDATE_INT,	// type de saisie : ligne, bloc-texte, photo (codé en numérique)
-		'group' =>	FILTER_SANITIZE_STRING,
-		'place' =>	FILTER_VALIDATE_INT		// emplacement pour la saisie (codé en numérique)
+		'place' =>	FILTER_VALIDATE_INT,	// emplacement pour la saisie (codé en numérique)
+		'invite'=>	FILTER_SANITIZE_STRING,
+		'grid'	=>	FILTER_SANITIZE_STRING,
+		'group' =>	FILTER_SANITIZE_STRING
 	);
 
 	public $options = array('no_integration' /*, 'champart'*/ ); # extended for Pluxml version <= 5.4
@@ -196,7 +199,7 @@ class kzChamPlus extends plxPlugin {
 
 		foreach(array_map(function($v) { return substr($v, strlen('name')); }, $names) as $indice) {
 			$entry = array();
-			foreach(array('label', 'group') as $k) {
+			foreach(array('label', 'group', 'invite', 'grid') as $k) {
 				$value = $this->getParam($k . $indice);
 				if(!empty($value)) { $entry[$k] = $value; }
 			}
@@ -214,8 +217,32 @@ class kzChamPlus extends plxPlugin {
 		$this->indexFields = $indexFields;
 	}
 
+	public function saveParams() {
+		if(!empty($this->orderConfig)) {
+			// Sorting parameters of plugin
+			$pattern = '#^(' . implode('|', $this->paramsNames). ')(\d+)$#';
+			$orders = $this->orderConfig;
+			uksort($this->aParams, function($a, $b) use($pattern, $orders) {
+				if(
+					preg_match($pattern, $a, $matchA) and
+					preg_match($pattern, $b, $matchB)
+				) {
+					if($matchA[2] == $matchB[2]) {
+						return strcmp($matchA[1], $matchB[1]);
+					} else {
+						return ($orders[$matchA[2]] - $orders[$matchB[2]]);
+					}
+				} else {
+					return (!empty($matchA[2])) ? -1 : 1;
+				}
+			});
+		}
+
+		parent::saveParams();
+	}
+
 	public function getConfigPath($filename=false) {
-		$path1 = preg_replace('#/'. __CLASS__ . ';xml$#', '/', $this->plug['parameters.xml']);
+		$path1 = preg_replace('#/'. __CLASS__ . '.xml$#', '/', $this->plug['parameters.xml']);
 		return $path1 . ((is_string($filename)) ? basename($filename , '.php') . '.xml' : '');
 	}
 
@@ -270,7 +297,6 @@ class kzChamPlus extends plxPlugin {
 				$suffixe = '[1]';
 			}
 			$field = $name . $suffixe;
-			echo "\n<!-- $value -->\n";
 ?>
 					<td>
 <?php
@@ -312,7 +338,9 @@ class kzChamPlus extends plxPlugin {
 			return (!empty($value['place']) and $value['place'] == $place);
 		});
 		if(empty($entries)) { return; }
-
+?>
+				<div class="grid <?php echo __CLASS__; ?>">
+<?php
 		foreach($entries as $key => $params) {
 			$fieldName = self::PREFIX . $key;
 			$caption = $params['label'];
@@ -336,15 +364,22 @@ class kzChamPlus extends plxPlugin {
 			} else {
 				return; // Bye !!!
 			}
+			$grid = 'sml-12';
+			if(!empty($params['grid'])) {
+				$grid = $params['grid'];
+			} elseif($place == self::TOP_ART) {
+				$grid .= ' med-7 lrg-8'; /* hack against PluXml */
+			}
+			$grid = preg_replace('#^col\b\s*#', '', $grid);
+			$placeholder = (!empty($params['invite'])) ? $params['invite'] . '"' : '';
 ?>
-				<div class="grid">
-					<div class="col sml-12<?php if($place == self::TOP_ART) { echo ' med-7 lrg-8'; } /* hack against PluXml */ ?>">
+					<div class="col <?php echo $grid; ?>">
 <?php
 			switch($params['entry']) {
 				case self::LIGNE :
 ?>
 						<label for="id_title"><?php echo $caption ?>&nbsp;:</label>
-						<?php plxUtils::printInput($fieldName, plxUtils::strCheck($value), 'text', $size, false, $className); echo "\n"; ?>
+						<?php plxUtils::printInput($fieldName, plxUtils::strCheck($value), 'text', $size, false, $className, $placeholder); echo PHP_EOL; ?>
 <?php
 					break;
 				case self::BLOCK_TEXT :
@@ -352,7 +387,7 @@ class kzChamPlus extends plxPlugin {
 ?>
 						<label for="id_<?php echo $fieldName; ?>"><?php echo $caption; ?>&nbsp;:&nbsp;<a id="toggler_<?php echo $fieldName; ?>" href="javascript:void(0)" onclick="toggleDiv('toggle_<?php echo $fieldName; ?>', 'toggler_<?php echo $fieldName; ?>', '<?php echo L_ARTICLE_CHAPO_DISPLAY ?>','<?php echo L_ARTICLE_CHAPO_HIDE ?>')"><?php echo (empty($value)) ? L_ARTICLE_CHAPO_DISPLAY : L_ARTICLE_CHAPO_HIDE; ?></a></label>
 						<div id="toggle_<?php echo $fieldName; ?>"<?php echo ($value !='') ? '' : ' style="display:none"' ?>>
-						<?php plxUtils::printArea($fieldName, plxUtils::strCheck($value), $cols, $rows, false, 'full-width'); echo "\n"; ?>
+						<?php plxUtils::printArea($fieldName, plxUtils::strCheck($value), $cols, $rows, false, 'full-width'); echo PHP_EOL; ?>
 						</div>
 <?php
 					}
@@ -363,7 +398,7 @@ class kzChamPlus extends plxPlugin {
 							<?php echo $caption; ?>&nbsp;:&nbsp;
 							<a title="<?php echo L_THUMBNAIL_SELECTION ?>" id="toggler_<?php echo $fieldName; ?>" href="javascript:void(0)" onclick="mediasManager.openPopup('id_<?php echo $fieldName; ?>', true)" style="outline:none; text-decoration: none">+</a>
 						</label>
-						<?php plxUtils::printInput($fieldName,plxUtils::strCheck($value), 'text', $size, false, $className, '', 'onkeyup="refreshImg(this.value)"'); ?>
+						<?php plxUtils::printInput($fieldName,plxUtils::strCheck($value), 'text', $size, false, $className, $placeholder, 'onkeyup="refreshImg(this.value)"'); ?>
 						<div id="id_<?php echo $fieldName; ?>_img">
 						<?php
 						$src = $value;
@@ -392,9 +427,11 @@ EOT;
 			}
 ?>
 					</div>
-				</div>
 <?php
 		}
+?>
+				</div>
+<?php
 	}
 
 	// Add fields in article.php
@@ -433,7 +470,7 @@ EOT;
 	 * Useful scripts for config.php and admin.php
 	 * */
 	public function AdminFootEndBody() {
-		// overlay for thumbnail like medis.php
+		// overlay for thumbnail like medias.php
 		if(in_array(basename($_SERVER['PHP_SELF'], '.php'), array('article', 'statique', 'categorie', 'user'))) {
 			$id = __CLASS__ . '-modal';
 ?>
@@ -451,6 +488,9 @@ EOT;
 
 		$src = PLX_PLUGINS . __CLASS__ . '/' . __CLASS__ . '.js';
 ?>
+<!--
+$this->fields = <?php print_r($this->fields); ?>
+-->
 		<script type="text/javascript" src="<?php echo $src; ?>" data-plugin="<?php echo __CLASS__; ?>"></script>
 <?php
 	}

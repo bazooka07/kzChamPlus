@@ -12,7 +12,7 @@ img.kzChamPlus { cursor: pointer; }
 }
 
 #kzChamPlusConfigForm th:not(.select1) { min-width: 16rem; }
-#kzChamPlusConfigForm .in-action-bar { z-index: 999; }
+#kzChamPlusConfigForm .in-action-bar { z-index: 780; }
 #kzChamPlusConfigForm tbody td:nth-of-type(3),
 #kzChamPlusConfigForm tbody td:nth-of-type(5) {
 	text-align: center;
@@ -138,3 +138,9 @@ img.kzChamPlus { cursor: pointer; }
 #kzChamPlus-adminHead th:nth-of-type(n+3) { padding-right: 70px; } /* hack */
 #kzChamPlus-adminHead img { vertical-align: bottom; }
 #kzChamPlus-adminHead button:first-of-type { margin-left: 1rem; }
+/* ----------- divers ---------- */
+.kzChamPlus.grid {
+	background-color: #eee;
+	padding-top: 0.5rem;
+	border: 1px solid #ccc;
+}

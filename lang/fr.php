@@ -32,6 +32,8 @@ $LANG = array(
 	'L_TITLE_ENTRY'				=> 'type de<br />champ',
 	'L_TITLE_GROUP'				=> 'Groupe',
 	'L_TITLE_PLACE'				=> 'Emplacement',
+	'L_TITLE_INVITE'			=> 'Invite',
+	'L_TITLE_GRID'				=> 'Grille CSS',
 	'L_BLOC'					=> 'Bloc texte',
 	'L_LASTARTLIST'				=> 'Activer le hook plxShowLastArtList',
 	'L_NO_INTEGRATION'			=> 'Désactiver l\'intégration automatique des médias',
@@ -47,6 +49,8 @@ $LANG = array(
 	'L_TOP_CAT_PLACE'			=> 'Tête catégorie',
 	'L_BOTTOM_USER_PLACE'		=> 'Pied utilisateur',
 	'L_TOP_USER_PLACE'			=> 'Tête utilisateur',
+	'L_IMPORT_PLUGIN'			=> 'Importer la configuration d\'un plugin',
+	'L_IMPORT_CANCEL'			=> 'Annuler',
 
 	'L_CHAMPART'				=> 'Utiliser le préfixe "champArt" pour les champs des fichiers articles (<em>Déconseillé</em>)',
 	'L_WARNING'					=> <<< 'WARNING'
