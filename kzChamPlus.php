@@ -170,9 +170,10 @@ class kzChamPlus extends plxPlugin {
 
 			/* ********** Use these hooks for your theme ********* */
 			// Hook du plugin à utiliser sur le site dans un thème pour un article ou une page statique
-			$this->addHook('chamPlus', 'chamPlus');
+			$this->addHook('kzChamPlus', 'kzChamPlus');
+			$this->addHook('chamPlus', 'kzChamPlus');
 			// renvoie tous les champs sous forme de tableau
-			$this->addHook('chamPlusList', 'chamPlusList');
+			$this->addHook('chamPlusList', 'kzChamPlusList');
 
 			/* ******* compatibilité pour les thèmes dédiés au plugin champArt  ****** */
 			$this->addHook('champArt', 'champArt');
@@ -648,7 +649,7 @@ EOT;
 	 * - s'il n'y pas de 3ème paramètre, on affiche rien
 	 * - si le 3ème paramètre est de type string, c'est la chaine à utiliser quand la valeur est nulle.
 	 * ******************************************************************************* */
-	public function chamPlus($params) {
+	public function kzChamPlus($params) {
 		global $plxMotor;
 
 		if (is_string($params)) { # affiche uniquement la valeur du champ
@@ -720,7 +721,7 @@ EOT;
 		return false;
 	}
 
-	public function chamPlusList($param=false) {
+	public function kzChamPlusList($param=false) {
 		if(!is_string($param)) {
 ?>
 <table class="<?php echo __CLASS__; ?>">
