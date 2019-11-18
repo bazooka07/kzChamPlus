@@ -17,15 +17,15 @@
  * */
 
 /* changelog
+ * 2019-11-17 :le plugin chamPlus est renommé en kzChamPlus
  * la fonction self::chamPlusArticle() est remplacée par le hook plxShowLastArtListContent ()version PluXml >= 5.5)
  * 2019-11-11 : création de admin.php
  * 2019-11-04 : fixed in AdminArticleInitData()
  * 2017-01-02 : fixed in _get_fields_art_loop()
 */
 
-class chamPlus extends plxPlugin {
+class kzChamPlus extends plxPlugin {
 	const PREFIX = 'cps_';
-	const PREFIX2 = 'champArt'; // Articles créés avec le plugin champArt
 
 	const OPEN_CODE = '<?php $plxAdmin->plxPlugins->aPlugins[\'' . __CLASS__ . '\']->adminEntry(';
 	const CLOSE_CODE = ', #PLACE#); ?>';
@@ -91,6 +91,22 @@ class chamPlus extends plxPlugin {
 	public function __construct($default_lang) {
 		parent::__construct($default_lang);
 
+		parent::setConfigProfil(PROFIL_ADMIN);
+
+		$myScript = basename($_SERVER['PHP_SELF'], '.php');
+		if($myScript == 'parametres_plugin') { // parametres_plugin.php?p=__CLASS__
+			// Multi-linguisme
+			foreach($this->places as $k => $v) {
+				$this->places[$k] = $this->getLang($v);
+			}
+			$filename = __dir__ . '/lang/' . $default_lang . '-help.php';
+			if(file_exists($filename)) {
+				$this->helpFile = $filename;
+			}
+		} elseif(empty($this->fields)) {
+			return;
+		}
+
 		/* ********** hooks inside class.plx.motor.php ******** */
 		$this->addHook('plxMotorParseArticle', 'plxMotorParseArticle');
 		$this->addHook('plxMotorGetStatiques', 'plxMotorGetStatiques');
@@ -98,14 +114,13 @@ class chamPlus extends plxPlugin {
 		$this->addHook('plxMotorGetUsers', 'plxMotorGetUsers');
 
 		if(defined('PLX_ADMIN')) {
-			parent::setConfigProfil(PROFIL_ADMIN);
 			parent::setAdminProfil(PROFIL_ADMIN, PROFIL_MANAGER);
 			parent::setAdminMenu($this->getLang('L_TITLE_MENU'), '', $this->getLang('HELP_MENU'));
 
 			/* ******** hooks inside top.php ****************** */
 			$this->addHook('AdminFootEndBody', 'AdminFootEndBody');
 
-			switch(basename($_SERVER['PHP_SELF'], '.php')) {
+			switch($myScript) {
 				case 'article' :
 					/* ******** hooks for article.php ****************** */
 					$this->addHook('plxAdminEditArticleXml', 'plxAdminEditArticleXml');
@@ -142,16 +157,6 @@ class chamPlus extends plxPlugin {
 					break;
 				case 'plugin' :
 					break;
-				case 'parametres_plugin': // parametres_plugin.php?p=__CLASS__
-					// Multi-linguisme
-					foreach($this->places as $k => $v) {
-						$this->places[$k] = $this->getLang($v);
-					}
-					$filename = __dir__ . '/lang/' . $default_lang . '-help.php';
-					if(file_exists($filename)) {
-						$this->helpFile = $filename;
-					}
-					break;
 			}
 		} else { // site
 			/* ********** hooks inside class.plx.show.php ******** */
@@ -181,10 +186,14 @@ class chamPlus extends plxPlugin {
 		$fields = array();
 		$indexFields = array();
 		$params = $this->getParams();
+		if(empty($params)) { return; }
+
 		$names = array_filter(
 			array_keys($params),
 			function($k) { return (strpos($k, 'name') === 0); }
 		);
+		if(empty($names)) { return; }
+
 		foreach(array_map(function($v) { return substr($v, strlen('name')); }, $names) as $indice) {
 			$entry = array();
 			foreach(array('label', 'group') as $k) {
@@ -205,6 +214,24 @@ class chamPlus extends plxPlugin {
 		$this->indexFields = $indexFields;
 	}
 
+	public function getConfigPath($filename=false) {
+		$path1 = preg_replace('#/'. __CLASS__ . ';xml$#', '/', $this->plug['parameters.xml']);
+		return $path1 . ((is_string($filename)) ? basename($filename , '.php') . '.xml' : '');
+	}
+
+	public function importConfigList() {
+		if(!empty($this->fields)) { return false; }
+
+		$output = array();
+		$path1 = self::getConfigPath();
+		foreach(array('chamPlus', 'champArt') as $k) {
+			if(is_readable($path1 . $k . '.xml') and file_exists(__DIR__ . '/import/' . $k . '.php')) {
+				$output[] = $k;
+			}
+		}
+		return (!empty($output)) ? $output : false;
+	}
+
 	/*
 	 * Précise si l'entrée dans $_POST doit être numérique pour config.php
 	 * */
@@ -217,8 +244,9 @@ class chamPlus extends plxPlugin {
 	}
 
 	public function newIndice() {
+		if(empty($this->indexFields)) { return 2; }
 		$t = array_keys($this->indexFields);
-		return ((!empty($t)) ? max($t) + 1 : 1);
+		return ((!empty($t)) ? max($t) + 1 : 2);
 	}
 
 	public function adminArtDisplay($indice) {
@@ -234,9 +262,15 @@ class chamPlus extends plxPlugin {
 				<tr>
 <?php
 		foreach(array_keys($this->paramsNames) as $name) {
-			// $value = (empty($new)) ? plxUtils::strCheck($this->getParam($name . $indice)) : '';
-			$value = (array_key_exists($name, $this->indexFields[$indice])) ? $this->indexFields[$indice][$name] : '';
-			$field = $name . '[' . $indice . ']';
+			if($indice > 0) {
+				$value = (array_key_exists($name, $this->indexFields[$indice])) ? $this->indexFields[$indice][$name] : '';
+				$suffixe = '[' . $indice . ']';
+			} else {
+				$value = '';
+				$suffixe = '[1]';
+			}
+			$field = $name . $suffixe;
+			echo "\n<!-- $value -->\n";
 ?>
 					<td>
 <?php
@@ -244,8 +278,12 @@ class chamPlus extends plxPlugin {
 				case 'entry':
 					if(empty($value)) { $value = self::LIGNE; }
 					plxUtils::printSelect($field, $this->fieldTypes, $value);
-					$order = 'order[' . $indice . ']';
-					$this->order++;
+					if($indice >= 0) {
+						$order = 'order[' . $indice . ']';
+						$this->order++;
+					} else {
+						$order = 'order[1]';
+					}
 					plxUtils::printInput($order, $this->order, 'hidden');
 					break;
 				case 'place' :
@@ -268,9 +306,13 @@ class chamPlus extends plxPlugin {
 	 * insert fields into several pages
 	 * */
 	public function adminEntry($data, $place=self::BOTTOM_ART) {
+		if(empty($this->fields)) { return; }
+
 		$entries = array_filter($this->fields, function($value) use($place) {
 			return (!empty($value['place']) and $value['place'] == $place);
 		});
+		if(empty($entries)) { return; }
+
 		foreach($entries as $key => $params) {
 			$fieldName = self::PREFIX . $key;
 			$caption = $params['label'];
@@ -370,10 +412,14 @@ EOT;
 	public function AdminUser()				{ echo str_replace('#PLACE#', self::BOTTOM_USER,	self::ADMIN_USER_CODE); }
 
 	private function _process($filter, $code) {
-		echo '<?php ' . PHP_EOL;
+		if(empty($this->fields)) { return; }
+
 		$entries = array_filter($this->fields, function($value) use($filter) {
 			return (!empty($value['place']) and in_array($value['place'], $filter));
 		});
+		if(empty($entries)) { return; }
+
+		echo '<?php ' . PHP_EOL;
 		foreach(array_keys($entries) as $key) {
 			$fieldName = self::PREFIX . $key;
 			echo str_replace('#FIELD_NAME#', $fieldName, $code) . PHP_EOL;

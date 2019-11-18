@@ -31,7 +31,7 @@
 		myForm.addEventListener('submit', function(event) {
 			// check for not empty input in the first column, except for the last row
 			var count = 0;
-			const elements = myForm.querySelectorAll('tbody tr:not(:last-of-type) td:first-of-type input');
+			const elements = myForm.querySelectorAll('tbody td:first-of-type input');
 			for(var i=0, iMax=elements.length; i<iMax; i++) {
 				const node = elements[i];
 				const value = node.value;

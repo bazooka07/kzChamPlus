@@ -1,9 +1,16 @@
 <?php
 if(!defined('PLX_ROOT')) { exit; }
 
+# Control du token du formulaire
+plxToken::validateFormToken($_POST);
+
+if(filter_has_var(INPUT_POST, 'import')) {
+	$other = filter_input(INPUT_POST, 'import', FILTER_SANITIZE_STRING) {
+
+	}
+}
+
 if(filter_has_var(INPUT_POST, 'name')) {
-	# Control du token du formulaire
-	plxToken::validateFormToken($_POST);
 
 	$reqs = array();
 	foreach($plxPlugin->paramsNames as $name=>$filter) {
@@ -78,8 +85,12 @@ foreach (array_keys($plxPlugin->paramsNames) as $name) {
 			</thead>
 			<tbody id="<?php echo $plugin; ?>Table"	data-indice="<?php echo $plxPlugin->newIndice(); ?>">
 <?php
-	foreach(array_keys($plxPlugin->indexFields) as $i) {
-		$plxPlugin->printFieldConfig($i);
+	if(!empty($plxPlugin->indexFields)) {
+		foreach(array_keys($plxPlugin->indexFields) as $i) {
+			$plxPlugin->printFieldConfig($i);
+		}
+	} else {
+		$plxPlugin->printFieldConfig(-1);
 	}
 ?>
 			</tbody>
@@ -117,5 +128,32 @@ if(!empty($plxPlugin->helpFile)) {
 	</div>
 <?php
 }
-echo "<!-- " . $plxPlugin->helpFile . " -->\n";
+
+$otherConfigs = $plxPlugin->importConfigList();
+if(!empty($otherConfigs)) {
+?>
+	<div id="<?php echo $plugin; ?>-config">
+		<p>Importer une config</p>
+		<form method="post">
+			<?php echo plxToken::getTokenPostMethod() ?>
+			<ul>
+<?php
+	foreach($otherConfigs as $config) {
+		$id = 'id_' . $config;
+?>
+				<li>
+					<input type="radio" id="<?php echo $id; ?>" name="import" value="<?php echo $config; ?>">
+					<label for="<?php echo $id; ?>"><?php echo $config; ?></label>
+				</li>
+<?php
+	}
+?>
+			</ul>
+			<div>
+				<input type="submit" />
+			</div>
+		</form>
+	</div>
+<?php
+}
 ?>

@@ -1,35 +1,35 @@
-img.chamPlus { cursor: pointer; }
-#chamPlus-modal + .modal__overlay { visibility: hidden; }
+img.kzChamPlus { cursor: pointer; }
+#kzChamPlus-modal + .modal__overlay { visibility: hidden; }
 .modal__box {
 	text-align: center;
 	margin-top: 50vh;
 	transform: translateY(-50%);
 }
-#chamPlus-modal:checked + .modal__overlay { visibility: visible; }
+#kzChamPlus-modal:checked + .modal__overlay { visibility: visible; }
 /* ******* config.php ******* */
-#chamPlusConfigForm label {
+#kzChamPlusConfigForm label {
 	display: inline;
 }
 
-#chamPlusConfigForm th:not(.select1) { min-width: 16rem; }
-#chamPlusConfigForm .in-action-bar { z-index: 999; }
-#chamPlusConfigForm tbody td:nth-of-type(3),
-#chamPlusConfigForm tbody td:nth-of-type(5) {
+#kzChamPlusConfigForm th:not(.select1) { min-width: 16rem; }
+#kzChamPlusConfigForm .in-action-bar { z-index: 999; }
+#kzChamPlusConfigForm tbody td:nth-of-type(3),
+#kzChamPlusConfigForm tbody td:nth-of-type(5) {
 	text-align: center;
 }
-#chamPlusConfigForm input[type='text'] {
+#kzChamPlusConfigForm input[type='text'] {
 	width: 100%;
 }
-#chamPlusConfigForm input[type='button'],
-#chamPlusConfigForm input[type='submit'] {
+#kzChamPlusConfigForm input[type='button'],
+#kzChamPlusConfigForm input[type='submit'] {
 	margin: 0 5px;
 	width: 150px;
 }
-#chamPlusConfigForm table + div p {
+#kzChamPlusConfigForm table + div p {
 	margin: 0.5em 1.5em;
 }
 
-#chamPlusHelpView {
+#kzChamPlusHelpView {
 	position: fixed;
 	top: 5px;
 	right: -820px;
@@ -46,21 +46,21 @@ img.chamPlus { cursor: pointer; }
 	transition: 1s ease-in-out;
 	z-index: 10200;
 }
-#chamPlusHelpView.active { right: 2%; }
-#chamPlusHelpView ul {
+#kzChamPlusHelpView.active { right: 2%; }
+#kzChamPlusHelpView ul {
 	list-style: initial;
 	padding-left: 20px;
 }
-#chamPlusHelpView p:last-of-type {
+#kzChamPlusHelpView p:last-of-type {
 	position: sticky;
 	bottom: 0.4rem;
 	text-indent: 0;
 }
-#chamPlusHelpView p:last-of-type {
+#kzChamPlusHelpView p:last-of-type {
 	margin: 0.5em 0;
 	text-align: center;
 }
-#chamPlusHelpView pre {
+#kzChamPlusHelpView pre {
 	margin: 0;
 	padding: 0 15px;
 	-moz-tab-size: 2;
@@ -68,11 +68,11 @@ img.chamPlus { cursor: pointer; }
 	background-color: #655C5C;
 	color: #DAFBDA;
 }
-#chamPlusHelpView code {
+#kzChamPlusHelpView code {
 	margin: 0;
 }
 
-#chamPlus-medias {
+#kzChamPlus-medias {
 	display: none;
 	position: fixed;
 	top: 120px;
@@ -84,57 +84,57 @@ img.chamPlus { cursor: pointer; }
 	border: 1px solid #444;
 	z-index: 999;
 }
-#chamPlus-medias-close {
+#kzChamPlus-medias-close {
 	position: absolute;
 	right: 0;
 }
 
 /* ************ admin.php *********** */
-#chamPlusFilterForm .filter { display: flex; }
-#chamPlusFilterForm .filter > div:not(.date) { flex-grow: 1; }
-#chamPlusFilterForm .filter label { text-align: center; white-space: nowrap; }
-#chamPlusFilterForm .filter select {
+#kzChamPlusFilterForm .filter { display: flex; }
+#kzChamPlusFilterForm .filter > div:not(.date) { flex-grow: 1; }
+#kzChamPlusFilterForm .filter label { text-align: center; white-space: nowrap; }
+#kzChamPlusFilterForm .filter select {
 	margin: 0;
 	width: 100%;
 }
-#chamPlusArtsForm th { white-space: nowrap; }
-#chamPlusArtsForm .articles {
+#kzChamPlusArtsForm th { white-space: nowrap; }
+#kzChamPlusArtsForm .articles {
 	margin: 1rem 0;
 	border: 1px solid #888;
 }
-#chamPlusArtsForm div.tag {
+#kzChamPlusArtsForm div.tag {
 	display: flex;
 	justify-content: space-between;
 	border: 1px solid #666;
 	padding: 0.5rem 1rem;
 }
-#chamPlusArtsForm div.tag label { display: inline-block; }
-#chamPlusArtsForm div.tag p { margin: 0; }
-#chamPlusArtsForm + div {
+#kzChamPlusArtsForm div.tag label { display: inline-block; }
+#kzChamPlusArtsForm div.tag p { margin: 0; }
+#kzChamPlusArtsForm + div {
 	text-align: center;
 	margin-top: 1rem;
 }
-#chamPlusArtsForm div.in-action-bar {
+#kzChamPlusArtsForm div.in-action-bar {
 	display: flex;
 	justify-content: space-between;
 	width: 83.333%;
 	padding-right: 1.5rem;
 }
 
-#chamPlus-arts input.field { width: 100%; }
-#chamPlus-arts p { margin: 0; }
-#chamPlus-arts em { font-size: 80%; }
-#chamPlus-arts tr:nth-of-type(2n+1) { background-color: #e8e8e8; }
-#chamPlus-arts tr { border: none; }
+#kzChamPlus-arts input.field { width: 100%; }
+#kzChamPlus-arts p { margin: 0; }
+#kzChamPlus-arts em { font-size: 80%; }
+#kzChamPlus-arts tr:nth-of-type(2n+1) { background-color: #e8e8e8; }
+#kzChamPlus-arts tr { border: none; }
 .articles th, .articles td { padding: 0.2rem 0.4rem; }
 
-#chamPlus-adminHead button {
+#kzChamPlus-adminHead button {
 	margin: 0;
 	padding: 0;
 	height: 32px;
 	background: none;
 }
-#chamPlus-adminHead span { vertical-align: super; }
-#chamPlus-adminHead th:nth-of-type(n+3) { padding-right: 70px; } /* hack */
-#chamPlus-adminHead img { vertical-align: bottom; }
-#chamPlus-adminHead button:first-of-type { margin-left: 1rem; }
+#kzChamPlus-adminHead span { vertical-align: super; }
+#kzChamPlus-adminHead th:nth-of-type(n+3) { padding-right: 70px; } /* hack */
+#kzChamPlus-adminHead img { vertical-align: bottom; }
+#kzChamPlus-adminHead button:first-of-type { margin-left: 1rem; }
