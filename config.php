@@ -42,7 +42,7 @@ if(filter_has_var(INPUT_POST, 'name')) {
 						$format = 'numeric';
 					} else {
 						$value = trim($reqs[$n][$indice]);
-						$format = 'string';
+						$format = 'cdata';
 					}
 					$plxPlugin->setParam($param, $value, $format);
 				} elseif($n == 'label') {
@@ -80,7 +80,8 @@ if(filter_has_var(INPUT_POST, 'name')) {
 			<thead>
 				<tr>
 <?php
-$notes = array('name', 'place');
+// $notes = array('name', 'place');
+$notes = array('name');
 $selects = array('entry', 'place');
 foreach (array_keys($plxPlugin->paramsNames) as $name) {
 	$xtra = array_search($name, $notes);
@@ -112,25 +113,43 @@ foreach (array_keys($plxPlugin->paramsNames) as $name) {
 ?>
 			<p>
 				<input type="checkbox" value="1" name="<?php echo $k; ?>" id="id_<?php echo $k; ?>"<?php echo $checked; ?> />
-				<label for="id_<?php echo $k; ?>"><?php $plxPlugin->lang(strtoupper('L_'.$k)); ?></label>
+				<label for="id_<?php echo $k; ?>" style="display: inline-block;"><?php $plxPlugin->lang(strtoupper('L_'.$k)); ?></label>
 			</p>
 <?php	} ?>
 		</div>
 		<div class="in-action-bar">
 <?php
-if(!empty($plxPlugin->helpFile)) {
+if(!empty($plxAdmin->plxPlugins->aPlugins[$plugin])) {
+	if(!empty($plxPlugin->helpFile)) {
 ?>
 			<input type="button" id="helpBtn" value="<?php $plxPlugin->lang('L_HELP_LABEL') ?>" />
 <?php
-}
+	}
 ?>
 			<input type="button" id="newFieldBtn" value="<?php $plxPlugin->lang('L_ADD') ?>" />
+<?php
+}
+?>
 			<input type="submit" value="<?php $plxPlugin->lang('L_SAVE') ?>" />
 		</div>
 	</form>
-	<p><?php $plxPlugin->lang('L_WARNING'); ?></p>
 <?php
-if(!empty($plxPlugin->helpFile)) {
+if(!empty($notes)) {
+?>
+	<div>
+<?php
+	foreach($notes as $k=>$v) {
+		$i = $k+1;
+?>
+		<p><sup><?php echo $i; ?></sup> <em><?php $plxPlugin->lang('L_WARNING' . $i); ?></em></p>
+<?php
+	}
+?>
+	</div>
+<?php
+}
+
+if(!empty($plxAdmin->plxPlugins->aPlugins[$plugin]) and !empty($plxPlugin->helpFile)) {
 ?>
 	<div id="<?php echo $plugin; ?>HelpView">
 		<?php readfile($plxPlugin->helpFile); ?>
@@ -151,9 +170,9 @@ if(!empty($otherConfigs)) {
 <div class="modal">
 	<input id="<?php echo $id; ?>" type="checkbox" checked />
 	<div class="modal__overlay">
-		<label for="<?php echo $id; ?>">&#10006;</label>
-		<div id="modal__box" class="modal__box">
-			<form name="<?php echo $plugin; ?>ConfigImport" method="post" class="inline-form modal-container">
+		<label for="<?php echo $id; ?>" style="position: absolute; top: 1rem; right: 1rem; font-size: 200%; background-color: #888; ">&#10006;</label>
+		<div id="modal__box" class="modal__box" style="margin-top: 50vh; transform: translateY(-50%);">
+			<form name="<?php echo $plugin; ?>ConfigImport" method="post" class="inline-form modal-container" style="margin: 0 auto;">
 				<?php echo plxToken::getTokenPostMethod() ?>
 				<div class="modal-caption"><?php $plxPlugin->lang('L_IMPORT_PLUGIN'); ?></div>
 				<ul class="unstyled-list">
@@ -162,7 +181,7 @@ if(!empty($otherConfigs)) {
 			$id = 'id_' . $config;
 ?>
 					<li>
-						<input type="radio" id="<?php echo $id; ?>" name="import" value="<?php echo $config; ?>">
+						<input type="radio" id="<?php echo $id; ?>" name="import" value="<?php echo $config; ?>" required />
 						<label for="<?php echo $id; ?>"><?php echo $config; ?></label>
 					</li>
 <?php

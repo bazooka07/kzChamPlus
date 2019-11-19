@@ -51,13 +51,12 @@ $LANG = array(
 	'L_TOP_USER_PLACE'			=> 'Tête utilisateur',
 	'L_IMPORT_PLUGIN'			=> 'Importer la configuration d\'un plugin',
 	'L_IMPORT_CANCEL'			=> 'Annuler',
+	'L_IMPORT_ARTCILES'			=> 'Il y a %d erreurs sur %d fichiers-articles',
 
 	'L_CHAMPART'				=> 'Utiliser le préfixe "champArt" pour les champs des fichiers articles (<em>Déconseillé</em>)',
-	'L_WARNING'					=> <<< 'WARNING'
-<sup>1</sup> Les champs sans nom ne sauront pas sauvegardés<br />
-<sup>2</sup> Les bloc-textes ne sont pas permis dans les pages statiques. Ils sont considérés comme des lignes.
-WARNING
-,
+	'L_WARNING1'				=> 'Les champs sans nom ne sauront pas sauvegardés. Ils ne doivent comporter que des lettres ou des chiffres',
+	'L_WARNING2'				=> 'Les bloc-textes ne sont pas permis dans les pages statiques. Ils sont considérés comme des lignes.',
+
 	'L_BADNAME'					=> <<< 'BADNAME'
 Le nom doit être en minuscules,\\\ncommencer par une lettre et\\\nne contenir que des lettres ou des chiffres
 BADNAME

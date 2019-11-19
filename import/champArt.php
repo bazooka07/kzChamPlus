@@ -29,12 +29,19 @@ if(xml_parse_into_struct($parser, file_get_contents($plxPlugin->getConfigPath(__
 		// traitement
 
 		$oldPlaces = array(
-		'bot' =>	self::BOTTOM_ART,
-		'side' =>	self::SIDEBAR_ART,
-		'foot' =>	self::BOTTOM_ART // ?????
+			'top' =>	kzChamPlus::TOP_ART,
+			'side' =>	kzChamPlus::SIDEBAR_ART,
+			'bot' =>	kzChamPlus::BOTTOM_ART,
+			'foot' =>	kzChamPlus::BOTTOM_ART // ?????
 		);
 
-		$place = (array_key_exists('pos_vie', $aParams)) ? $oldPlaces[$aParams['pos_vie']] : kzChamPlus::BOTTOM_ART;
+		$place = kzChamPlus::BOTTOM_ART;
+		if(array_key_exists('pos_vie', $aParams)) {
+			$pos_vie = $aParams['pos_vie']['value'];
+			if(array_key_exists($pos_vie, $oldPlaces)) {
+				$place = $oldPlaces[$pos_vie];
+			}
+		}
 
 		$newTypes = array(
 			'ligne'	=> kzChamPlus::LIGNE,
@@ -46,14 +53,13 @@ if(xml_parse_into_struct($parser, file_get_contents($plxPlugin->getConfigPath(__
 		});
 		foreach($names as $name) {
 			$i = preg_replace('#^champ#', '', $name);
-
-
 			foreach(
 				array(
-					'name'			=> 'champ',
-					'label'			=> 'label',
-					'group'			=> 'groupe',
-					'placeholder'	=> 'phold'
+					'name'		=> 'champ',
+					'label'		=> 'label',
+					'group'		=> 'groupe',
+					'invite'	=> 'phold',
+					'entry'		=> 'type'
 				) as $k => $old
 			) { // $plxPlugin->$paramsNames
 
@@ -61,27 +67,27 @@ if(xml_parse_into_struct($parser, file_get_contents($plxPlugin->getConfigPath(__
 				$oldParam = $old . $i;
 				// $param is unchanged
 				if(array_key_exists($oldParam, $aParams)) {
-					$plxPlugin->setParam($param, $aParams[$oldParam]['value'], 'string');
+					$value = $aParams[$oldParam]['value'];
+
+					if(empty($value)) { continue; }
+
+					$type = 'string';
+					if($k == 'entry') {
+						$value = (array_key_exists($value, $newTypes)) ? $newTypes[$value] : kzChamPlus::LIGNE;
+						$type = 'numeric';
+					} elseif($k != 'name') {
+						$value = htmlspecialchars_decode($value, ENT_QUOTES);
+						$type = 'cdata';
+						if($k == 'label') {
+							$value .= '#'; // Φ © ® ™
+						}
+					}
+					$plxPlugin->setParam($param, $value, $type);
 				}
 			}
 
-			// entry and place
-			$value = kzChamPlus::LIGNE;
-
-			$oldParam = 'textarea' . $i;
-			if(array_key_exists($oldParam)) {
-				$oldCode = intval($aParams[$oldParam]);
-				if(in_array($oldCode, $newTypes)) {
-					$value = $newTypes[$oldCode];
-				}
-			}
 			// integers
-			$plxPlugin->setParam('entry' . $i, $value, 'numeric');
 			$plxPlugin->setParam('place' . $i, $place, 'numeric');
-		}
-
-		if(!empty($aParams['no_integration'])) {
-			$plxPlugin->setParam('no_integration', 1, 'numeric');
 		}
 
 		$plxPlugin->saveParams();
@@ -91,33 +97,26 @@ xml_parser_free($parser);
 
 $n = 0;
 $errors = 0;
-$ignores = 0;
-foreach(glob('/*.xml') as $filename) {
+$pattern = '#<' . kzChamPlus::PREFIX_IMPORT1 . '([\w-]+)>(.*?)</' . kzChamPlus::PREFIX_IMPORT1 . '#';
+foreach($plxAdmin->plxGlob_arts->aFiles as $article) {
+	$filename = PLX_ROOT . $plxAdmin->aConf['racine_articles'] . $article;
 	if(is_writable($filename)) {
-		if(preg_match('#.*/\d{4}\.(?:draft,|home,)?\d{3}(?:(?:,\d{3})*\.\d{3}\.\d{12}\..*\.xml$#', $filename)) {
-			file_put_contents(
-				$filename,
-				preg_replace(
-					'<champArt_',
-					'<' . kzChamPlus::PREFIX,
-					file_get_contents($filename)
-				);
-			);
-		} else {
-			$ignores++;
-		}
+		file_put_contents(
+			$filename,
+			preg_replace(
+				$pattern,
+				"$0$1>\n\t<" . kzChamPlus::PREFIX . "$1>$2</" . kzChamPlus::PREFIX,
+				file_get_contents($filename)
+			)
+		);
 	} else {
 		$errors++;
 	}
 	$n++;
 }
-if(!empty($errors)) {
-	$msg = $n . ' articles modfiés';
-	if(!empty($ignores)) {
-		$msg .= " $ignores articles ignorés";
-	}
-	plxMsg::Info($msg);
+if($errors == 0) {
+	plxMsg::Info($n . ' ' . L_ARTICLE_MODIFY_SUCCESSFUL);
 } else {
-	plxMsg::Error($errors . ' erreurs sur ' . $count . ' articles');
+	plxMsg::Error(sprintf($plxPlugin->getLang('L_IMPORT_ARTCILES'), $errors, $n));
 }
 ?>

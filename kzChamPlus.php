@@ -26,6 +26,7 @@
 
 class kzChamPlus extends plxPlugin {
 	const PREFIX = 'cps_';
+	const PREFIX_IMPORT1 = 'champArt_';
 
 	const OPEN_CODE = '<?php $plxAdmin->plxPlugins->aPlugins[\'' . __CLASS__ . '\']->adminEntry(';
 	const CLOSE_CODE = ', #PLACE#); ?>';
@@ -252,7 +253,7 @@ class kzChamPlus extends plxPlugin {
 
 		$output = array();
 		$path1 = self::getConfigPath();
-		foreach(array('chamPlus', 'champArt') as $k) {
+		foreach(array('champArt', 'chamPlus') as $k) {
 			if(is_readable($path1 . $k . '.xml') and file_exists(__DIR__ . '/import/' . $k . '.php')) {
 				$output[] = $k;
 			}
@@ -317,6 +318,9 @@ class kzChamPlus extends plxPlugin {
 					if(empty($value)) { $value = self::BOTTOM_ART; }
 					plxUtils::printSelect($field, $this->places, $value);
 					break;
+				case 'name' :
+					plxUtils::printInput($field, $value, 'text', '', false, '', '', 'pattern="\w*"');
+					break;
 				default:
 					plxUtils::printInput($field, $value, 'text', '');
 			}
@@ -345,7 +349,7 @@ class kzChamPlus extends plxPlugin {
 		foreach($entries as $key => $params) {
 			$fieldName = self::PREFIX . $key;
 			$caption = $params['label'];
-			$value = (!empty($data) and array_key_exists($fieldName, $data)) ? $data[$fieldName] : '';
+			$value = (!empty($data) and array_key_exists($fieldName, $data)) ? addslashes($data[$fieldName]) : '';
 
 			# default values
 			$cols = 35;
