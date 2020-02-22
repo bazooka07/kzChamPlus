@@ -55,7 +55,7 @@ $LANG = array(
 
 	'L_CHAMPART'				=> 'Utiliser le préfixe "champArt" pour les champs des fichiers articles (<em>Déconseillé</em>)',
 	'L_WARNING1'				=> 'Les champs sans nom ne sauront pas sauvegardés. Ils ne doivent comporter que des lettres ou des chiffres',
-	'L_WARNING2'				=> 'Les bloc-textes ne sont pas permis dans les pages statiques. Ils sont considérés comme des lignes.',
+	'L_WARNING2'				=> 'Pas obligatoire. Sinon grille selon PluCSS. Par exemple: med-6 lgr-4',
 
 	'L_BADNAME'					=> <<< 'BADNAME'
 Le nom doit être en minuscules,\\\ncommencer par une lettre et\\\nne contenir que des lettres ou des chiffres

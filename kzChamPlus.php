@@ -25,6 +25,7 @@
 */
 
 class kzChamPlus extends plxPlugin {
+	const DEBUG = false;
 	const PREFIX = 'cps_';
 	const PREFIX_IMPORT1 = 'champArt_';
 
@@ -222,7 +223,7 @@ class kzChamPlus extends plxPlugin {
 	public function saveParams() {
 		if(!empty($this->orderConfig)) {
 			// Sorting parameters of plugin
-			$pattern = '#^(' . implode('|', $this->paramsNames). ')(\d+)$#';
+			$pattern = '#^(' . implode('|', array_keys($this->paramsNames)). ')(\d+)$#';
 			$orders = $this->orderConfig;
 			uksort($this->aParams, function($a, $b) use($pattern, $orders) {
 				if(
@@ -318,6 +319,9 @@ class kzChamPlus extends plxPlugin {
 					if(empty($value)) { $value = self::BOTTOM_ART; }
 					plxUtils::printSelect($field, $this->places, $value);
 					break;
+				case 'grid' :
+					plxUtils::printInput($field, $value, 'text', '', false, '', '', 'pattern="(?:sml|med|lrg)-\d{1,2}(?: (?:sml|med|lrg)-\d{1,2})*"');
+					break;
 				case 'name' :
 					plxUtils::printInput($field, $value, 'text', '', false, '', '', 'pattern="\w*"');
 					break;
@@ -331,6 +335,22 @@ class kzChamPlus extends plxPlugin {
 ?>
 				</tr>
 <?php
+	}
+
+
+	public function printArea($name, $value='', $cols=false, $rows=false, $readonly=false, $class=false, $extras = false) {
+		$attrs = array(
+			'id="id_' . $name . '"',
+			'name="' . $name . '"'
+		);
+		if(!empty($cols) and is_integer($cols)) { $attrs[] = 'cols="' . $cols . '"'; }
+		if(!empty($rows) and is_integer($rows)) { $attrs[] = 'rows="' . $rows . '"'; }
+		$classList = array();
+		if($readonly === true) { $classList[] = 'readonly'; }
+		if(!empty($class) and is_string($class) and strlen(trim($class)) > 0) { $classList[] = trim($class); }
+		if(!empty($classList)) { $attrs[] = 'class="' . implode(' ', $classList) . '"'; }
+		if(is_string($extras)) { $attrs[] = $extras; }
+		echo '<textarea ' . implode(' ', $attrs) . '>' . $value . '</textarea>';
 	}
 
 	/*
@@ -352,8 +372,7 @@ class kzChamPlus extends plxPlugin {
 			$value = (!empty($data) and array_key_exists($fieldName, $data)) ? addslashes($data[$fieldName]) : '';
 
 			# default values
-			$cols = 35;
-			$rows = 8;
+			$cols = 35; $rows = 8;
 			$size = '';
 			$className = 'full-width';
 
@@ -362,6 +381,7 @@ class kzChamPlus extends plxPlugin {
 				$className = ($place == self::SIDEBAR_ART) ? '' : 'full-width';
 			} elseif(in_array($place, $this->staticPlaces)) { // static page - no sidebar !
 				$size = '50-255';
+				$cols = 140; $rows = 30;
 			} elseif(in_array($place, $this->catPlaces)) {
 				// nothing to do
 			} elseif(in_array($place, $this->userPlaces)) {
@@ -369,7 +389,7 @@ class kzChamPlus extends plxPlugin {
 			} else {
 				return; // Bye !!!
 			}
-			$grid = 'sml-12';
+			$grid = '';
 			if(!empty($params['grid'])) {
 				$grid = $params['grid'];
 			} elseif($place == self::TOP_ART) {
@@ -378,7 +398,7 @@ class kzChamPlus extends plxPlugin {
 			$grid = preg_replace('#^col\b\s*#', '', $grid);
 			$placeholder = (!empty($params['invite'])) ? $params['invite'] . '"' : '';
 ?>
-					<div class="col <?php echo $grid; ?>">
+					<div class="col<?php if(!empty($grid)) echo ' ' . $grid; ?>">
 <?php
 			switch($params['entry']) {
 				case self::LIGNE :
@@ -389,10 +409,11 @@ class kzChamPlus extends plxPlugin {
 					break;
 				case self::BLOCK_TEXT :
 					if(!$place != self::SIDEBAR_ART) { // for static 140,30 otherwise 35,8
+						$extras = (!empty($placeholder)) ? 'placeholder="' . $placeholder . '"' : false;
 ?>
 						<label for="id_<?php echo $fieldName; ?>"><?php echo $caption; ?>&nbsp;:&nbsp;<a id="toggler_<?php echo $fieldName; ?>" href="javascript:void(0)" onclick="toggleDiv('toggle_<?php echo $fieldName; ?>', 'toggler_<?php echo $fieldName; ?>', '<?php echo L_ARTICLE_CHAPO_DISPLAY ?>','<?php echo L_ARTICLE_CHAPO_HIDE ?>')"><?php echo (empty($value)) ? L_ARTICLE_CHAPO_DISPLAY : L_ARTICLE_CHAPO_HIDE; ?></a></label>
 						<div id="toggle_<?php echo $fieldName; ?>"<?php echo ($value !='') ? '' : ' style="display:none"' ?>>
-						<?php plxUtils::printArea($fieldName, plxUtils::strCheck($value), $cols, $rows, false, 'full-width'); echo PHP_EOL; ?>
+						<?php self::printArea($fieldName, plxUtils::strCheck($value), $cols, $rows, false, 'full-width', $extras); echo PHP_EOL; ?>
 						</div>
 <?php
 					}
@@ -404,28 +425,30 @@ class kzChamPlus extends plxPlugin {
 							<a title="<?php echo L_THUMBNAIL_SELECTION ?>" id="toggler_<?php echo $fieldName; ?>" href="javascript:void(0)" onclick="mediasManager.openPopup('id_<?php echo $fieldName; ?>', true)" style="outline:none; text-decoration: none">+</a>
 						</label>
 						<?php plxUtils::printInput($fieldName,plxUtils::strCheck($value), 'text', $size, false, $className, $placeholder, 'onkeyup="refreshImg(this.value)"'); ?>
-						<div id="id_<?php echo $fieldName; ?>_img">
-						<?php
-						$src = $value;
-						$alt = basename($value);
-						$attr =  '';
-						if(!preg_match('@^(?:https?|data):@', $value)) {
-							$src = PLX_ROOT . $value;
-							if(file_exists($src)) {
-								$thumbName = preg_replace('#\.(jpe?g|png|gif)$#', '.tb.$1', $src);
-								if(file_exists($thumbName)) { $src = $thumbName; }
-								list($width, $height, $type, $attr) = getimagesize($src);
-							} else {
-								$src = false;
+						<div id="id_<?php echo $fieldName; ?>_img" class="media">
+<?php
+						if(!empty($value) and preg_match('#\.(?:jpe?g|png|gif)$#', $value)) {
+							$src = $value;
+							$alt = basename($value);
+							$attr =  '';
+							if(!preg_match('@^(?:https?|data):@', $value)) {
+								$src = PLX_ROOT . $value;
+								if(file_exists($src)) {
+									$thumbName = preg_replace('#\.(jpe?g|png|gif)$#', '.tb.$1', $src);
+									if(file_exists($thumbName)) { $src = $thumbName; }
+									list($width, $height, $type, $attr) = getimagesize($src);
+								} else {
+									$src = false;
+								}
 							}
-						}
-						if($src) {
-							$className = __CLASS__;
-							echo <<< EOT
+							if($src) {
+								$className = __CLASS__;
+								echo <<< EOT
 <img src="$src" alt="$alt" class="$className" title="$value"$attr />\n
 EOT;
+							}
 						}
-						?>
+?>
 						</div>
 <?php
 					break;
@@ -493,9 +516,6 @@ EOT;
 
 		$src = PLX_PLUGINS . __CLASS__ . '/' . __CLASS__ . '.js';
 ?>
-<!--
-$this->fields = <?php print_r($this->fields); ?>
--->
 		<script type="text/javascript" src="<?php echo $src; ?>" data-plugin="<?php echo __CLASS__; ?>"></script>
 <?php
 	}

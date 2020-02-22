@@ -17,6 +17,13 @@ if(filter_has_var(INPUT_POST, 'import')) {
 }
 
 if(filter_has_var(INPUT_POST, 'name')) {
+	if($plxPlugin::DEBUG) {
+		error_log(
+			date('Y-m-d H:i') . PHP_EOL . '$_POST = ' . print_r($_POST, true),
+			3,
+			PLX_ROOT . $plxAdmin->aConf['racine_articles'] . $plugin . '.log'
+		);
+	}
 
 	$reqs = array();
 	foreach(array_merge($plxPlugin->paramsNames, array('order'=>FILTER_VALIDATE_INT)) as $name=>$filter) {
@@ -32,7 +39,7 @@ if(filter_has_var(INPUT_POST, 'name')) {
 	foreach($names as $indice=>$name) {
 		if(!empty($name)) {
 			$plxPlugin->setParam('name' . $indice, preg_replace('#[\s-]+#', '_', $name), 'string');
-			$mass[$indice] = (!empty($reqs['order'][$indice])) ? intval($reqs['order'][$indice]) : -1;
+			$orders[$indice] = (!empty($reqs['order'][$indice])) ? intval($reqs['order'][$indice]) : -1;
 			foreach(array_keys($plxPlugin->paramsNames) as $n) {
 				if($n == 'name') { continue; }
 				$param = $n . $indice;
@@ -81,11 +88,20 @@ if(filter_has_var(INPUT_POST, 'name')) {
 				<tr>
 <?php
 // $notes = array('name', 'place');
-$notes = array('name');
+$notes = array('name', 'grid');
 $selects = array('entry', 'place');
 foreach (array_keys($plxPlugin->paramsNames) as $name) {
 	$xtra = array_search($name, $notes);
-	$className = (in_array($name, $selects)) ? ' class="select1"' : '';
+	switch($name) {
+		case 'entry' :
+		case 'place' :
+			$className = ' class="select1"'; break;
+		case 'name' :
+		case 'label' :
+		case 'group' :
+			$className = ' class="small"'; break;
+		default : $className = '';
+	}
 ?>
 				<th<?php echo $className; ?>><?php $plxPlugin->lang(strtoupper('L_TITLE_'.$name)); if(is_integer($xtra)) echo '<sup>' . ($xtra + 1). '</sup>'?></th>
 <?php
@@ -125,11 +141,9 @@ if(!empty($plxAdmin->plxPlugins->aPlugins[$plugin])) {
 			<input type="button" id="helpBtn" value="<?php $plxPlugin->lang('L_HELP_LABEL') ?>" />
 <?php
 	}
-?>
-			<input type="button" id="newFieldBtn" value="<?php $plxPlugin->lang('L_ADD') ?>" />
-<?php
 }
 ?>
+			<input type="button" id="newFieldBtn" value="<?php $plxPlugin->lang('L_ADD') ?>" />
 			<input type="submit" value="<?php $plxPlugin->lang('L_SAVE') ?>" />
 		</div>
 	</form>
@@ -197,4 +211,13 @@ if(!empty($otherConfigs)) {
 </div>
 <?php
 }
+
+if(empty($plxAdmin->plxPlugins->aPlugins[$plugin])) {
+	// Plugin inactif
+	$src = PLX_PLUGINS . "$plugin/$plugin.js";
+?>
+		<script type="text/javascript" src="<?php echo $src; ?>" data-plugin="<?php echo $plugin; ?>"></script>
+<?php
+}
+
 ?>

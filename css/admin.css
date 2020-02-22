@@ -6,12 +6,16 @@ img.kzChamPlus { cursor: pointer; }
 	transform: translateY(-50%);
 }
 #kzChamPlus-modal:checked + .modal__overlay { visibility: visible; }
+
+div.grid.kzChamPlus .media img { margin-top: 0.3rem; }
+
 /* ******* config.php ******* */
 #kzChamPlusConfigForm label {
 	display: inline;
 }
 
 #kzChamPlusConfigForm th:not(.select1) { min-width: 16rem; }
+#kzChamPlusConfigForm th.small { min-width: 10rem; }
 #kzChamPlusConfigForm .in-action-bar { z-index: 780; }
 #kzChamPlusConfigForm tbody td:nth-of-type(3),
 #kzChamPlusConfigForm tbody td:nth-of-type(5) {
