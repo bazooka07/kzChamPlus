@@ -17,7 +17,8 @@
  * */
 
 /* changelog
- * 2019-11-17 :le plugin chamPlus est renommé en kzChamPlus
+ * 2020-02-22 : Fix against PluXml-5.8 (toggleDiv is missing) - Fix indice for new field in config.php
+ * 2019-11-17 : le plugin chamPlus est renommé en kzChamPlus
  * la fonction self::chamPlusArticle() est remplacée par le hook plxShowLastArtListContent ()version PluXml >= 5.5)
  * 2019-11-11 : création de admin.php
  * 2019-11-04 : fixed in AdminArticleInitData()
@@ -273,6 +274,7 @@ class kzChamPlus extends plxPlugin {
 		return $this->fields[$fieldName]['entry'] == self::MEDIA;
 	}
 
+	// Deprecated. See : newFieldBtn.addEventListener('click', function(event) {...} in javascript
 	public function newIndice() {
 		if(empty($this->indexFields)) { return 2; }
 		$t = array_keys($this->indexFields);
@@ -327,6 +329,9 @@ class kzChamPlus extends plxPlugin {
 					break;
 				default:
 					plxUtils::printInput($field, $value, 'text', '');
+			}
+			if($name != 'place') {
+				print(PHP_EOL); // Add eol after every plxUtils::printInput(..)
 			}
 ?>
 					</td>
@@ -396,23 +401,24 @@ class kzChamPlus extends plxPlugin {
 				$grid .= ' med-7 lrg-8'; /* hack against PluXml */
 			}
 			$grid = preg_replace('#^col\b\s*#', '', $grid);
-			$placeholder = (!empty($params['invite'])) ? $params['invite'] . '"' : '';
+			$placeholder = (!empty($params['invite'])) ? $params['invite'] : '';
 ?>
 					<div class="col<?php if(!empty($grid)) echo ' ' . $grid; ?>">
 <?php
 			switch($params['entry']) {
 				case self::LIGNE :
 ?>
-						<label for="id_title"><?php echo $caption ?>&nbsp;:</label>
+						<label for="id_<?php echo $fieldName; ?>"><?php echo $caption ?>&nbsp;:</label>
 						<?php plxUtils::printInput($fieldName, plxUtils::strCheck($value), 'text', $size, false, $className, $placeholder); echo PHP_EOL; ?>
 <?php
 					break;
 				case self::BLOCK_TEXT :
 					if(!$place != self::SIDEBAR_ART) { // for static 140,30 otherwise 35,8
 						$extras = (!empty($placeholder)) ? 'placeholder="' . $placeholder . '"' : false;
+						$style = ($value !='') ? '' : ' style="display:none;"';
 ?>
-						<label for="id_<?php echo $fieldName; ?>"><?php echo $caption; ?>&nbsp;:&nbsp;<a id="toggler_<?php echo $fieldName; ?>" href="javascript:void(0)" onclick="toggleDiv('toggle_<?php echo $fieldName; ?>', 'toggler_<?php echo $fieldName; ?>', '<?php echo L_ARTICLE_CHAPO_DISPLAY ?>','<?php echo L_ARTICLE_CHAPO_HIDE ?>')"><?php echo (empty($value)) ? L_ARTICLE_CHAPO_DISPLAY : L_ARTICLE_CHAPO_HIDE; ?></a></label>
-						<div id="toggle_<?php echo $fieldName; ?>"<?php echo ($value !='') ? '' : ' style="display:none"' ?>>
+						<label for="id_<?php echo $fieldName; ?>"><?php echo $caption; ?>&nbsp;:&nbsp;<a href="javascript:void(0)" onclick="kzToggleDiv('toggle_<?php echo $fieldName; ?>', '<?= L_ARTICLE_CHAPO_DISPLAY ?>', '<?= L_ARTICLE_CHAPO_HIDE ?>')"><?= (empty($value)) ? L_ARTICLE_CHAPO_DISPLAY : L_ARTICLE_CHAPO_HIDE; ?></a></label>
+						<div id="toggle_<?php echo $fieldName; ?>"<?= $style ?>>
 						<?php self::printArea($fieldName, plxUtils::strCheck($value), $cols, $rows, false, 'full-width', $extras); echo PHP_EOL; ?>
 						</div>
 <?php

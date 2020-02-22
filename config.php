@@ -81,6 +81,7 @@ if(filter_has_var(INPUT_POST, 'name')) {
 }
 
 ?>
+
 	<form id="<?php echo $plugin; ?>ConfigForm" method="post"> <!--  action="/variables.php" -->
 		<?php echo plxToken::getTokenPostMethod() ?>
 		<div class="scrollable-table"><table class="full-width" data-rows-num='name^="order"'>
@@ -109,7 +110,7 @@ foreach (array_keys($plxPlugin->paramsNames) as $name) {
 ?>
 				</tr>
 			</thead>
-			<tbody id="<?php echo $plugin; ?>Table"	data-indice="<?php echo $plxPlugin->newIndice(); ?>">
+			<tbody id="<?php echo $plugin; ?>Table">
 <?php
 	if(!empty($plxPlugin->indexFields)) {
 		foreach(array_keys($plxPlugin->indexFields) as $i) {

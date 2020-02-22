@@ -82,17 +82,23 @@
 		const newFieldBtn = document.getElementById('newFieldBtn');
 		if(newFieldBtn != null) {
 			newFieldBtn.addEventListener('click', function(event) {
-				const table = document.getElementById(plugin + 'Table');
-				const lastRow = table.rows[table.rows.length - 1];
-				const indice = parseInt(table.dataset.indice);
-				table.dataset.indice = indice + 1;
+				const tbody = document.getElementById(plugin + 'Table');
+				const lastRow = tbody.rows[tbody.rows.length - 1];
+				var newIndex = tbody.rows.length;
+				const inputs = tbody.querySelectorAll('input[name^="name["]');
+				if(inputs.length > 0) {
+					for(var i=0, iMax=inputs.length; i<iMax; i++) {
+						var value = parseInt(inputs[i].name.replace(/.*\[(\d+)\]$/, '$1'));
+						if(newIndex <= value) {
+							newIndex = value + 1;
+						}
+					}
+				}
 				const newRow = document.createElement('TR');
-				const template = lastRow.innerHTML.replace(/\[(\d+)\]/g, function(str, p1) {
-					return '[' + (parseInt(p1) + 1) + ']';
-				});
+				const template = lastRow.innerHTML.replace(/\[(\d+)\]/g, '[' + newIndex + ']');
 				newRow.innerHTML = template;
 				// newRow.draggable = true;
-				table.appendChild(newRow);
+				tbody.appendChild(newRow);
 				const nodes = newRow.querySelectorAll('input, select');
 				for(var i=0, iMax=nodes.length; i<iMax; i++) {
 
@@ -219,3 +225,16 @@
 	}
 
 })();
+
+function kzToggleDiv(divId, on, off) {
+	const div = document.getElementById(divId);
+	if(div != null) {
+		if(div.style.display == 'none') {
+			div.style.display = 'block';
+			this.innerHTML = off;
+		} else {
+			div.style.display = 'none';
+			this.innerHTML = on;
+		}
+	}
+}

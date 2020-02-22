@@ -2,8 +2,8 @@
 <document>
     <title>kzChamPlus</title>
     <author>Jean-Pierre Pourrez</author>
-    <version>2.2.2</version>
-    <date>15/01/20</date>
+    <version>2.2.3</version>
+    <date>22/02/20</date>
     <site>https://www.kazimentou.fr</site>
     <description><![CDATA[Ajoute des champs personnalisés aux articles, pages statiques, catégories et utilisateurs. Gére les champs médias. Ajoute et supprime les mots-clés dans les articles.]]></description>
     <requirements>Pluxml 5.4 .. 5.8 - HTML5, PHP >= 5.4</requirements>
