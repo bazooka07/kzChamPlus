@@ -17,6 +17,7 @@
  * */
 
 /* changelog
+ * 2020-03-04 : Fix pour pages statiques place => static. Mis à jour help
  * 2020-02-22 : Fix against PluXml-5.8 (toggleDiv is missing) - Fix indice for new field in config.php
  * 2019-11-17 : le plugin chamPlus est renommé en kzChamPlus
  * la fonction self::chamPlusArticle() est remplacée par le hook plxShowLastArtListContent ()version PluXml >= 5.5)
@@ -697,7 +698,7 @@ EOT;
 		}
 
 		$nameField = self::PREFIX . $name;
-		if ($plxMotor->mode == 'place') {
+		if ($plxMotor->mode == 'static') {
 			$static_id =  $plxMotor->cible;
 			$value = plxUtils::strCheck($plxMotor->aStats[$static_id][$nameField]);
 		}

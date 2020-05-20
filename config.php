@@ -168,6 +168,7 @@ if(!empty($plxAdmin->plxPlugins->aPlugins[$plugin]) and !empty($plxPlugin->helpF
 ?>
 	<div id="<?php echo $plugin; ?>HelpView">
 		<?php readfile($plxPlugin->helpFile); ?>
+		<p><input type="button" value="Masquer" class="close" /></p>
 	</div>
 <?php
 }

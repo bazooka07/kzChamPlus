@@ -64,6 +64,7 @@ div.grid.kzChamPlus .media img { margin-top: 0.3rem; }
 	margin: 0.5em 0;
 	text-align: center;
 }
+#parametres_help .kzChamPlus-code,
 #kzChamPlusHelpView pre {
 	margin: 0;
 	padding: 0 15px;
