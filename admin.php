@@ -180,28 +180,36 @@ if(!array_key_exists($_SESSION[$plugin]['tag'], $tags)) {
 }
 
 /* ------------- forms start here ------------- */
+
+function printButton($i, $currentPage, $caption='') {
+	$disabled = ($i === $currentPage) ? ' disabled' : '';
 ?>
-<form id="<?php echo $plugin; ?>FilterForm" method="post"><!--  action="/variables.php" -->
-	<?php echo plxToken::getTokenPostMethod() ?>
+			<button type="button" data-page="<?= $i ?>"<?= $disabled ?>><?= !empty($caption) ? $caption : $i ?></button>
+<?php
+}
+
+?>
+<form id="<?= $plugin; ?>FilterForm" method="post"><!--  action="/variables.php" -->
+	<?= plxToken::getTokenPostMethod() ?>
 	<div class="filter">
 		<div>
 			<label for="id_author"><?= defined('L_AUTHOR') ? L_AUTHOR : L_ARTICLE_LIST_AUTHORS ?></label>
 <?php plxUtils::printSelect('author', $authors, $_SESSION[$plugin]['author']); ?>
 		</div><div>
-			<label for="id_cat"><?php echo L_CATEGORY ?></label>
+			<label for="id_cat"><?= L_CATEGORY ?></label>
 <?php plxUtils::printSelect('cat', $cats, $_SESSION[$plugin]['cat']); ?>
 		</div><div>
-			<label for="id_tag"><?php echo L_ARTICLE_TAGS_FIELD ?></label>
+			<label for="id_tag"><?= L_ARTICLE_TAGS_FIELD ?></label>
 <?php plxUtils::printSelect('tag', $tags, $_SESSION[$plugin]['tag']); ?>
 		</div>
 		<div class="date">
 			<label for="id_pubFrom"><?php $plxPlugin->lang('L_PUB_FROM'); ?></label>
-			<input type="date" id="id_pubFrom" name="pubFrom" value="<?php echo $_SESSION[$plugin]['pubFrom']; ?>" />
+			<input type="date" id="id_pubFrom" name="pubFrom" value="<?= $_SESSION[$plugin]['pubFrom']; ?>" />
 		</div><div class="date">
 			<label for="id_pubTo"><?php $plxPlugin->lang('L_PUB_TO'); ?></label>
-			<input type="date" id="id_pub_To" name="pubTo" value="<?php echo $_SESSION[$plugin]['pubTo']; ?>"/>
+			<input type="date" id="id_pub_To" name="pubTo" value="<?= $_SESSION[$plugin]['pubTo']; ?>"/>
 		</div><div>
-			<label for="id_status"><?php echo L_ARTICLE_STATUS; ?></label>
+			<label for="id_status"><?= L_ARTICLE_STATUS; ?></label>
 <?php plxUtils::printSelect('status', $artStatus, $_SESSION[$plugin]['status']); ?>
 		</div><div>
 			<label for="id_field" title="<?php $plxPlugin->lang('L_FIRST_DISPLAYED_FIELD'); ?>"><?php $plxPlugin->lang('L_FIELD'); ?></label>
@@ -211,18 +219,20 @@ if(!array_key_exists($_SESSION[$plugin]['tag'], $tags)) {
 <?php plxUtils::printSelect('template', $templates, $_SESSION[$plugin]['template']); ?>
 		</div><div class="date">
 			<label>&nbsp;</label>
-			<input type="submit" name="filter_btn"  id="<?php echo $plugin; ?>-filter" value="<?php $plxPlugin->lang('L_FILTER'); ?>" />
+			<input type="submit" name="filter_btn"  id="<?= $plugin; ?>-filter" value="<?php $plxPlugin->lang('L_FILTER'); ?>" />
 		</div>
 	</div>
 </form>
-
-<form id="<?php echo $plugin; ?>ArtsForm" method="post"><!--  action="/variables.php" -->
-	<?php echo plxToken::getTokenPostMethod() ?>
-	<input type="hidden" name="artsPage" value="<?php echo $plxAdmin->page; ?>" />
+<?php
+// ----------- tableau des articles ---------------
+?>
+<form id="<?= $plugin; ?>ArtsForm" method="post"><!--  action="/variables.php" -->
+	<?= plxToken::getTokenPostMethod() ?>
+	<input type="hidden" name="artsPage" value="<?= $plxAdmin->page; ?>" />
 		<div class="articles scrollable-table"><table class="full-width">
 			<thead>
-				<tr id="<?php echo $plugin; ?>-adminHead">
-					<th><input type="checkbox" id="<?php echo $plugin; ?>-selectAll" /></th>
+				<tr id="<?= $plugin; ?>-adminHead">
+					<th><input type="checkbox" id="<?= $plugin; ?>-selectAll" /></th>
 					<th>Date</th>
 					<th>Titre article</th>
 <?php
@@ -236,14 +246,18 @@ $fks = array_keys($artFields);
 $i = array_search($_SESSION[$plugin]['field'], $fks);
 $fieldKeys = (is_integer($i) and $i > 0) ? array_merge(array_slice($artFields, $i, null, true), array_slice($artFields, 0, $i, true)) : $artFields;
 foreach($fieldKeys as $titleCol) {
-	echo <<< EOT
-					<th><span>$titleCol</span><button type="button"><img src="$src/drop.png" alt="$drop" /></button> <button type="button"><img src="$src/edit.png" alt="$change" /></button></th>\n
-EOT;
+?>
+					<th>
+						<span><?= $titleCol ?></span>
+						<button type="button"><img src="<?= $src ?>/drop.png" alt="<?= $drop ?>" title="<?= $drop ?>" /></button>
+						<button type="button"><img src="<?= $src ?>/edit.png" alt="<?= $change ?>" title="<?= $change ?>" /></button>
+					</th>
+<?php
 }
 ?>
 				</tr>
 			</thead>
-			<tbody id="<?php echo $plugin; ?>-arts">
+			<tbody id="<?= $plugin; ?>-arts">
 <?php
 /* -------- Génération du filtre de fichiers article ------- */
 // https://wiki.pluxml.org/developper/developpement/#comprendre-le-nom-des-fichiers-xml-des-articles
@@ -263,16 +277,16 @@ switch($_SESSION[$plugin]['status']) {
 	case 'draft':
 		switch($idCat) {
 			case '000' :	$parts[] = 'draft,000'; break; // articles sans catégorie
-			case '' :	 	$parts[] = 'draft(,\d{3})+'; break; // articles de toute catégorie
-			default: 		$parts[] = 'draft,(\d{3},)*' . $idCat . '(,\d{3})*'; // articles de la catégorie précise $idCat
+			case '' :	 	$parts[] = 'draft,(?:home|\d{3})(?:,\d{3)*'; break; // articles de toute catégorie
+			default: 		$parts[] = 'draft,(?:home,|\d{3},)*' . $idCat . '(?:,\d{3})*'; // articles de la catégorie précise $idCat
 		}
 		break;
 	case 'pub':
 		$prefix = '';
 		switch($idCat) {
-			case '000' :	$parts[] = $v; break; // articles sans catégorie
-			case '' :	 	$parts[] = '\d{3}(,\d{3})*'; break; // articles de toute catégorie
-			default: 		$parts[] = '(\d{3},)*' . $idCat . '(,\d{3})*'; // articles de la catégorie précise $idCat
+			case '000' :	$parts[] = '000'; break; // articles sans catégorie
+			case '' :	 	$parts[] = '(?:home|\d{3})(?:,\d{3})*'; break; // articles de toute catégorie
+			default: 		$parts[] = '(?:home,|\d{3},)*' . $idCat . '(,\d{3})*'; // articles de la catégorie précise $idCat
 		}
 		break;
 	case 'mod':
@@ -280,8 +294,8 @@ switch($_SESSION[$plugin]['status']) {
 	default:
 		switch($idCat) {
 			case '000' :	$parts[] = '(?:draft,)?000'; break; // articles sans catégorie
-			case '' :	 	$parts[] = '(?:draft,)?\d{3}(,\d{3})*'; break; // articles de toute catégorie
-			default: 		$parts[] = '(?:draft,)?(\d{3},)*' . $idCat . '(,\d{3})*'; // articles de la catégorie précise $idCat
+			case '' :	 	$parts[] = '(?:draft,)?(?:home|\d{3})(?:,\d{3})*'; break; // articles de toute catégorie
+			default: 		$parts[] = '(?:draft,|home,|\d{3},)*' . $idCat . '(,\d{3})*'; // articles de la catégorie précise $idCat
 		}
 }
 // author
@@ -326,36 +340,44 @@ if($plxAdmin->getArticles('all')) {
 		$idArt = $plxAdmin->plxRecord_arts->f('numero');
 		$dateModif = plxDate::formatDate($plxAdmin->plxRecord_arts->f('date'));
 		$title = $plxAdmin->plxRecord_arts->f('title');
-		$t = trim($plxAdmin->plxRecord_arts->f('tags'));
-		$tagsArt = (!empty($t)) ? '<em>' . L_ARTICLE_TAGS_FIELD . ': ' . $t . '</em>' : '&nbsp;';
 		$catIds = explode(',', $plxAdmin->plxRecord_arts->f('categorie'));
 		$draft = (in_array('draft', $catIds)) ? ' <strong>' . (defined('L_DRAFT') ? L_DRAFT : L_CATEGORY_DRAFT) . '</strong>' : '';
-		echo <<< EOT
+?>
 				<tr>
-					<td><input type="checkbox" name="idArts[]" value="$idArt" title="artId: $idArt" /></td>
-					<td>$dateModif</td>
+					<td><input type="checkbox" name="idArts[]" value="<?= $idArt ?>" title="artId: <?= $idArt ?>" /></td>
+					<td><?= $dateModif ?></td>
 					<td>
-						<p><a href="article.php?a=$idArt">$title</a>$draft</p>
-						<p>$tagsArt</p>
-					</td>\n
-EOT;
+						<p><a href="article.php?a=<?= $idArt ?>"><?= $title ?></a><?= $draft ?></p>
+<?php
+		$t = trim($plxAdmin->plxRecord_arts->f('tags'));
+		if(!empty($t)) {
+?>
+						<p><em><?= L_ARTICLE_TAGS_FIELD . ': ' . $t ?></em></p>
+<?php
+		}
+?>
+					</td>
+<?php
 		foreach(array_keys($fieldKeys) as $field) {
 			$fieldName = $plugin::PREFIX . $field;
 			$name = "arts[$idArt][$fieldName]";
 			$value = $plxAdmin->plxRecord_arts->f($fieldName);
 			if($value === false) { $value = ''; }
-			echo <<< EOT
-				<td><input name="$name" value="$value" class="field" /></td>
-EOT;
+?>
+				<td><input name="<?= $name ?>" value="<?= $value ?>" class="field" /></td>
+<?php
 		}
-		echo <<< EOT
-				</tr>\n
-EOT;
+?>
+				</tr>
+<?php
 		$enableTags = true;
 	}
 } else {
 ?>
-				<tr><td>&nbsp;</td><td colspan="<?php echo count($fieldKeys) + 2; ?>"><?php echo L_NO_ARTICLE; ?></td></tr>
+				<tr>
+					<td>&nbsp;</td>
+					<td colspan="<?= count($fieldKeys) + 2; ?>"><?= L_NO_ARTICLE; ?></td>
+				</tr>
 <?php
 }
 ?>
@@ -374,8 +396,8 @@ if($enableTags) {
 	$t = $_SESSION[$plugin]['tag'];
 	if(!empty($t) and preg_match('@^\w@', $t)) {
 ?>
-					<input type="checkbox" name="del_tag" id="id_new_tag" value="<?php echo $tags[$t]; ?>" />
-					<label for="id_del_tag"><?php $plxPlugin->lang('L_DEL_TAG'); ?> : <?php echo $tags[$t]; ?></label>
+					<input type="checkbox" name="del_tag" id="id_new_tag" value="<?= $tags[$t]; ?>" />
+					<label for="id_del_tag"><?php $plxPlugin->lang('L_DEL_TAG'); ?> : <?= $tags[$t]; ?></label>
 <?php
 	} else {
 ?>
@@ -389,7 +411,7 @@ if($enableTags) {
 }
 ?>
 		<div class="in-action-bar">
-			<input type="submit" id="<?php echo $plugin; ?>-submit" disabled />
+			<input type="submit" id="<?= $plugin; ?>-submit" disabled />
 <?php
 $c = $plxAdmin->plxGlob_arts->query($patternArt);
 if(!empty($c)) {
@@ -397,30 +419,23 @@ if(!empty($c)) {
 	// plxUtils::debugJS($artsCount, "[$plugin] \$artsCount");
 	if($artsCount > $plxAdmin->bypage) {
 ?>
-			<div id="<?php echo $plugin; ?>Pagination">
+			<div id="<?= $plugin; ?>Pagination">
 				<span><?php $plxPlugin->lang('L_PAGE'); ?></span>
 <?php
 		$bypage = intval($plxAdmin->bypage);
 		$pages = intval(($artsCount + $bypage -1) / $bypage);
 		if($pages > 2) {
 			$i = ($plxAdmin->page > 1) ? $plxAdmin->page - 1 : 1;
-			$disabled = ($i == $plxAdmin->page) ? ' disabled' : '';
-		echo <<< EOT
-			<button type="button" data-page="$i"$disabled>&lt;</button>\n
-EOT;
-	}
+			printButton($i, $plxAdmin->page, '&lt;');
+		}
+
 		for($i=1, $iMax = $pages; $i<=$iMax; $i++) {
-			$disabled = ($i == $plxAdmin->page) ? ' disabled' : '';
-			echo <<< EOT
-			<button type="button" data-page="$i"$disabled>$i</button>\n
-EOT;
-	}
+			printButton($i, $plxAdmin->page);
+		}
+
 		if($pages > 2) {
 			$i = ($plxAdmin->page < $pages - 1) ? $plxAdmin->page + 1 : $pages;
-			$disabled = ($i == $plxAdmin->page) ? ' disabled' : '';
-			echo <<< EOT
-			<button type="button" data-page="$i"$disabled>&gt;</button>\n
-EOT;
+			printButton($i, $plxAdmin->page, '&gt;');
 		}
 ?>
 			</div>

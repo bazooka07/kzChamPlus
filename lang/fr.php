@@ -19,9 +19,11 @@ $LANG = array(
 	'L_FIRST_DISPLAYED_FIELD'	=> '1er champ à afficher',
 	'L_YES'						=> 'Oui',
 	'L_NO'						=> 'Non',
+	'L_DROP'					=> 'Supprimer',
+	'L_CHANGE'					=> 'Editer',
 
 	/* ------------ config.php ----------- */
-	'L_LABEL'					=> 'Entre l\'intitulé',
+	'L_LABEL'					=> 'Entrez l\'intitulé',
 	'L_NAME'					=> 'Entrez le nom',
 	'L_TEXTAREA'				=> 'type de<br />champ',
 	'L_GROUP'					=> 'Entrez le groupe si besoin',
