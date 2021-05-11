@@ -136,12 +136,10 @@ foreach (array_keys($plxPlugin->paramsNames) as $name) {
 		</div>
 		<div class="in-action-bar">
 <?php
-if(!empty($plxAdmin->plxPlugins->aPlugins[$plugin])) {
-	if(!empty($plxPlugin->helpFile)) {
+if(!empty($plxPlugin->helpFile)) {
 ?>
 			<input type="button" id="helpBtn" value="<?php $plxPlugin->lang('L_HELP_LABEL') ?>" />
 <?php
-	}
 }
 ?>
 			<input type="button" id="newFieldBtn" value="<?php $plxPlugin->lang('L_ADD') ?>" />
@@ -164,11 +162,13 @@ if(!empty($notes)) {
 <?php
 }
 
-if(!empty($plxAdmin->plxPlugins->aPlugins[$plugin]) and !empty($plxPlugin->helpFile)) {
+if(!empty($plxPlugin->helpFile)) {
 ?>
 	<div id="<?php echo $plugin; ?>HelpView">
-		<?php readfile($plxPlugin->helpFile); ?>
-		<p><input type="button" value="Masquer" class="close" /></p>
+		<div>
+<?php readfile($plxPlugin->helpFile); ?>
+			<p><input type="button" value="Masquer" class="close" /></p>
+		</div>
 	</div>
 <?php
 }
@@ -221,5 +221,3 @@ if(empty($plxAdmin->plxPlugins->aPlugins[$plugin])) {
 		<script type="text/javascript" src="<?php echo $src; ?>" data-plugin="<?php echo $plugin; ?>"></script>
 <?php
 }
-
-?>

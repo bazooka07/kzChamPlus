@@ -194,11 +194,17 @@
 						}
 						break;
 				}
-				const rows = document.getElementById('chamPlus-arts').rows;
-				for(var i=0, iMax=rows.length; i<iMax ; i++) {
-					if(checkedArts[i].checked) {
-						rows[i].cells[cellIndex].firstChild.value = newValue;
+				const id = 'kzChamPlus-arts';
+				const tbody = document.getElementById(id);
+				if(tbody != null) {
+					const rows = tbody.rows;
+					for(var i=0, iMax=rows.length; i<iMax ; i++) {
+						if(checkedArts[i].checked) {
+							rows[i].cells[cellIndex].firstChild.value = newValue;
+						}
 					}
+				} else {
+					console.error('Element with #' + id + ' is missing');
 				}
 			}
 		});

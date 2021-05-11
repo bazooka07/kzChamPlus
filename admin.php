@@ -147,17 +147,16 @@ if(filter_has_var(INPUT_POST, 'idArts')) {
 					$content['moderate'] = '1';
 				}
 				$content['catId'] = (!empty($content['categorie'])) ? explode(',', $content['categorie']) : array('000');
-				$content['date_creation_year'] =	substr($content['date_creation'], 0, 4);
-				$content['date_creation_month'] =	substr($content['date_creation'], 4, 2);
-				$content['date_creation_day'] =		substr($content['date_creation'], 6, 2);
-				$content['date_creation_time'] =	substr($content['date_creation'], 8, 4);
-				$content['date_update_old'] = '';
-				foreach(array('update', 'publication') as $i) {
-					foreach(array('year', 'month', 'day', 'time') as $j) {
-						$field = implode('_', array('date', $i, $j));
-						$content[$field] = '';
-					}
+
+				// Préservation des dates
+				foreach(array('creation', 'update', 'publication') as $dt) {
+					$src = ($dt != 'publication') ? 'date_' . $dt : 'date';
+					$content['date_' . $dt . '_year'] =	substr($content[$src], 0, 4);
+					$content['date_' . $dt . '_month'] =	substr($content[$src], 4, 2);
+					$content['date_' . $dt . '_day'] =		substr($content[$src], 6, 2);
+					$content['date_' . $dt . '_time'] =	substr($content[$src], 8, 4);
 				}
+				$content['date_update_old'] = $content['date_update'];
 
 				$result = $plxAdmin->editArticle($content, $idArt);
 			}
@@ -186,7 +185,7 @@ if(!array_key_exists($_SESSION[$plugin]['tag'], $tags)) {
 	<?php echo plxToken::getTokenPostMethod() ?>
 	<div class="filter">
 		<div>
-			<label for="id_author"><?php echo L_ARTICLE_LIST_AUTHORS ?></label>
+			<label for="id_author"><?= defined('L_AUTHOR') ? L_AUTHOR : L_ARTICLE_LIST_AUTHORS ?></label>
 <?php plxUtils::printSelect('author', $authors, $_SESSION[$plugin]['author']); ?>
 		</div><div>
 			<label for="id_cat"><?php echo L_CATEGORY ?></label>
@@ -260,6 +259,7 @@ if(preg_match('@^\d{4}(,\d{4})*$@', $tagCC, $matches)) {
 $idCat = trim($_SESSION[$plugin]['cat']);
 $prefix = '_?';
 switch($_SESSION[$plugin]['status']) {
+	# manque la catégorie home si classé (!000)
 	case 'draft':
 		switch($idCat) {
 			case '000' :	$parts[] = 'draft,000'; break; // articles sans catégorie
@@ -329,7 +329,7 @@ if($plxAdmin->getArticles('all')) {
 		$t = trim($plxAdmin->plxRecord_arts->f('tags'));
 		$tagsArt = (!empty($t)) ? '<em>' . L_ARTICLE_TAGS_FIELD . ': ' . $t . '</em>' : '&nbsp;';
 		$catIds = explode(',', $plxAdmin->plxRecord_arts->f('categorie'));
-		$draft = (in_array('draft', $catIds)) ? ' <strong>' . L_CATEGORY_DRAFT . '</strong>' : '';
+		$draft = (in_array('draft', $catIds)) ? ' <strong>' . (defined('L_DRAFT') ? L_DRAFT : L_CATEGORY_DRAFT) . '</strong>' : '';
 		echo <<< EOT
 				<tr>
 					<td><input type="checkbox" name="idArts[]" value="$idArt" title="artId: $idArt" /></td>

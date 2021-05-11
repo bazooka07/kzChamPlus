@@ -1,10 +1,13 @@
 img.kzChamPlus { cursor: pointer; }
 #kzChamPlus-modal + .modal__overlay { visibility: hidden; }
+/*
 .modal__box {
 	text-align: center;
 	margin-top: 50vh;
 	transform: translateY(-50%);
 }
+* */
+
 #kzChamPlus-modal:checked + .modal__overlay { visibility: visible; }
 
 div.grid.kzChamPlus .media img { margin-top: 0.3rem; }
@@ -50,7 +53,7 @@ div.grid.kzChamPlus .media img { margin-top: 0.3rem; }
 	transition: 1s ease-in-out;
 	z-index: 10200;
 }
-#kzChamPlusHelpView.active { right: 2%; }
+#kzChamPlusHelpView.active { right: 1rem; }
 #kzChamPlusHelpView ul {
 	list-style: initial;
 	padding-left: 20px;
@@ -61,7 +64,8 @@ div.grid.kzChamPlus .media img { margin-top: 0.3rem; }
 	text-indent: 0;
 }
 #kzChamPlusHelpView p:last-of-type {
-	margin: 0.5em 0;
+	width: 15rem;
+	margin: 0.5em auto;
 	text-align: center;
 }
 #parametres_help .kzChamPlus-code,
@@ -92,6 +96,29 @@ div.grid.kzChamPlus .media img { margin-top: 0.3rem; }
 #kzChamPlus-medias-close {
 	position: absolute;
 	right: 0;
+}
+
+#kzChamPlusHelpView > div {
+	position: relative;
+	margin: 0;
+	padding: 0;
+}
+#kzGoTop {
+	position:sticky;
+	display: block;
+	bottom: 1rem;
+	width: 15rem;
+	margin: 0 0 0 auto;
+	padding: 0.2rem 0.75rem;
+	background-color: #23234d;
+	color: yellow;
+	text-align: center;
+}
+#kzChamPlusConfigForm #helpBtn {
+	margin-right: 5rem;
+}
+#kzChamPlusConfigForm .in-action-bar {
+	margin-top: 5.25em;
 }
 
 /* ************ admin.php *********** */
@@ -143,9 +170,17 @@ div.grid.kzChamPlus .media img { margin-top: 0.3rem; }
 #kzChamPlus-adminHead th:nth-of-type(n+3) { padding-right: 70px; } /* hack */
 #kzChamPlus-adminHead img { vertical-align: bottom; }
 #kzChamPlus-adminHead button:first-of-type { margin-left: 1rem; }
+
 /* ----------- divers ---------- */
 .kzChamPlus.grid {
 	background-color: #eee;
 	padding-top: 0.5rem;
 	border: 1px solid #ccc;
+}
+
+/* -------- parametres_help.php ----- */
+#parametres_help #kzGoTop {
+	position: fixed;
+	bottom: 1rem;
+	right: 1rem;
 }

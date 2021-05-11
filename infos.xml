@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document>
     <title>kzChamPlus</title>
-    <author>Jean-Pierre Pourrez</author>
-    <version>2.2.4</version>
-    <date>04/03/20</date>
-    <site>https://www.kazimentou.fr</site>
-    <description><![CDATA[Ajoute des champs personnalisés aux articles, pages statiques, catégories et utilisateurs. Gére les champs médias. Ajoute et supprime les mots-clés dans les articles.]]></description>
-    <requirements>Pluxml 5.4 .. 5.8 - HTML5, PHP >= 5.4</requirements>
+    <author>Jean-Pierre Pourrez "Bazooka07"</author>
+    <version>2.6.0</version>
+    <date>10/05/21</date>
+    <site>https://www.kazimentou.fr/repo</site>
+    <description><![CDATA[Ajoute des champs personnalisés aux articles, pages statiques, catégories et utilisateurs.
+Gére les champs médias. Ajoute et supprime les mots-clés dans les articles.]]></description>
+    <requirements>Pluxml 5.7 - 5.8.4 - branch master - HTML5, PHP >= 5.6</requirements>
     <repository>https://www.kazimentou.fr/repo/</repository>
 </document>
