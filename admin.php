@@ -355,7 +355,7 @@ EOT;
 	}
 } else {
 ?>
-				<tr><td>&nbsp;</td><td colspan="<?php echo count($indices) + 2; ?>"><?php echo L_NO_ARTICLE; ?></td></tr>
+				<tr><td>&nbsp;</td><td colspan="<?php echo count($fieldKeys) + 2; ?>"><?php echo L_NO_ARTICLE; ?></td></tr>
 <?php
 }
 ?>
