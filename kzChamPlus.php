@@ -563,7 +563,13 @@ if(defined('PLX_URL_RESSOURCES')) {
 } else {
 	$caption = (!empty($kzValue)) ? '<![CDATA[' . plxUtils::cdataCheck($kzValue) . ']]>' : '';
 }
-$xml .= "\t<#FIELD_NAME#>" . $caption . "</#FIELD_NAME#>" . PHP_EOL;
+if(isset($xml)) {
+   $xml .= "\t<#FIELD_NAME#>" . $caption . "</#FIELD_NAME#>" . PHP_EOL;
+} else {
+?>
+	<#FIELD_NAME#><?= $caption ?></#FIELD_NAME#>
+<?php
+}
 EOT;
 
 	private function _plxAdminEditXml($filter1) {
