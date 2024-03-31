@@ -6,7 +6,7 @@ plxToken::validateFormToken($_POST);
 
 if(filter_has_var(INPUT_POST, 'import')) {
 	$other = filter_input(INPUT_POST, 'import', FILTER_SANITIZE_STRING);
-	$filename = __DIR__ . "/import/$other.php";
+	$filename = __DIR__ . '/import/$other.php';
 	if(!empty($other)) {
 		if(file_exists($filename)) {
 			include $filename;
@@ -82,8 +82,8 @@ if(filter_has_var(INPUT_POST, 'name')) {
 
 ?>
 
-	<form id="<?php echo $plugin; ?>ConfigForm" method="post"> <!--  action="/variables.php" -->
-		<?php echo plxToken::getTokenPostMethod() ?>
+	<form id="<?= $plugin; ?>ConfigForm" method="post"> <!--  action="/variables.php" -->
+		<?= plxToken::getTokenPostMethod() ?>
 		<div class="scrollable-table"><table class="full-width" data-rows-num='name^="order"'>
 			<thead>
 				<tr>
@@ -104,13 +104,13 @@ foreach (array_keys($plxPlugin->paramsNames) as $name) {
 		default : $className = '';
 	}
 ?>
-				<th<?php echo $className; ?>><?php $plxPlugin->lang(strtoupper('L_TITLE_'.$name)); if(is_integer($xtra)) echo '<sup>' . ($xtra + 1). '</sup>'?></th>
+				<th<?= $className; ?>><?php $plxPlugin->lang(strtoupper('L_TITLE_'.$name)); if(is_integer($xtra)) echo '<sup>' . ($xtra + 1). '</sup>'?></th>
 <?php
 }
 ?>
 				</tr>
 			</thead>
-			<tbody id="<?php echo $plugin; ?>Table">
+			<tbody id="<?= $plugin; ?>Table">
 <?php
 	if(!empty($plxPlugin->indexFields)) {
 		foreach(array_keys($plxPlugin->indexFields) as $i) {
@@ -129,8 +129,8 @@ foreach (array_keys($plxPlugin->paramsNames) as $name) {
 			$checked = ($plxPlugin->getParam($k) > 0) ? ' checked' : '';
 ?>
 			<p>
-				<input type="checkbox" value="1" name="<?php echo $k; ?>" id="id_<?php echo $k; ?>"<?php echo $checked; ?> />
-				<label for="id_<?php echo $k; ?>" style="display: inline-block;"><?php $plxPlugin->lang(strtoupper('L_'.$k)); ?></label>
+				<input type="checkbox" value="1" name="<?= $k; ?>" id="id_<?= $k; ?>"<?= $checked; ?> />
+				<label for="id_<?= $k; ?>" style="display: inline-block;"><?php $plxPlugin->lang(strtoupper('L_'.$k)); ?></label>
 			</p>
 <?php	} ?>
 		</div>
@@ -154,7 +154,7 @@ if(!empty($notes)) {
 	foreach($notes as $k=>$v) {
 		$i = $k+1;
 ?>
-		<p><sup><?php echo $i; ?></sup> <em><?php $plxPlugin->lang('L_WARNING' . $i); ?></em></p>
+		<p><sup><?= $i; ?></sup> <em><?php $plxPlugin->lang('L_WARNING' . $i); ?></em></p>
 <?php
 	}
 ?>
@@ -164,7 +164,7 @@ if(!empty($notes)) {
 
 if(!empty($plxPlugin->helpFile)) {
 ?>
-	<div id="<?php echo $plugin; ?>HelpView">
+	<div id="<?= $plugin; ?>HelpView">
 		<div>
 <?php readfile($plxPlugin->helpFile); ?>
 			<p><input type="button" value="Masquer" class="close" /></p>
@@ -184,12 +184,12 @@ if(!empty($otherConfigs)) {
 	.in-action-bar { z-index: 780; }
 </style>
 <div class="modal">
-	<input id="<?php echo $id; ?>" type="checkbox" checked />
+	<input id="<?= $id; ?>" type="checkbox" checked />
 	<div class="modal__overlay">
-		<label for="<?php echo $id; ?>" style="position: absolute; top: 1rem; right: 1rem; font-size: 200%; background-color: #888; ">&#10006;</label>
+		<label for="<?= $id; ?>" style="position: absolute; top: 1rem; right: 1rem; font-size: 200%; background-color: #888; ">&#10006;</label>
 		<div id="modal__box" class="modal__box" style="margin-top: 50vh; transform: translateY(-50%);">
-			<form name="<?php echo $plugin; ?>ConfigImport" method="post" class="inline-form modal-container" style="margin: 0 auto;">
-				<?php echo plxToken::getTokenPostMethod() ?>
+			<form name="<?= $plugin; ?>ConfigImport" method="post" class="inline-form modal-container" style="margin: 0 auto;">
+				<?= plxToken::getTokenPostMethod() ?>
 				<div class="modal-caption"><?php $plxPlugin->lang('L_IMPORT_PLUGIN'); ?></div>
 				<ul class="unstyled-list">
 <?php
@@ -197,15 +197,15 @@ if(!empty($otherConfigs)) {
 			$id = 'id_' . $config;
 ?>
 					<li>
-						<input type="radio" id="<?php echo $id; ?>" name="import" value="<?php echo $config; ?>" required />
-						<label for="<?php echo $id; ?>"><?php echo $config; ?></label>
+						<input type="radio" id="<?= $id; ?>" name="import" value="<?= $config; ?>" required />
+						<label for="<?= $id; ?>"><?= $config; ?></label>
 					</li>
 <?php
 		}
 ?>
 				</ul>
 				<div>
-					<input type="submit" id="<?php echo $plugin; ?>ImportBtn" />
+					<input type="submit" id="<?= $plugin; ?>ImportBtn" />
 				</div>
 			</form>
 		</div>
@@ -218,6 +218,6 @@ if(empty($plxAdmin->plxPlugins->aPlugins[$plugin])) {
 	// Plugin inactif
 	$src = PLX_PLUGINS . "$plugin/$plugin.js";
 ?>
-		<script type="text/javascript" src="<?php echo $src; ?>" data-plugin="<?php echo $plugin; ?>"></script>
+		<script type="text/javascript" src="<?= $src; ?>" data-plugin="<?= $plugin; ?>"></script>
 <?php
 }

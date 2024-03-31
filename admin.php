@@ -448,7 +448,7 @@ if(!empty($c)) {
 <div><em><?php $plxPlugin->lang('L_ADMIN_WARNING'); ?></em></div>
 <pre style="background-color: #444; color: yellow; padding: 0 1rem 0.5rem;"><code><?php
 	/* ---- pour débogage ------- */
-	echo "Filtre fichiers article : $patternArt\n";
+	echo "Filtre fichiers article : $patternArt" . PHP_EOL;
 	// echo "Champlus\n";	print_r($plxPlugin->indices());
 	// echo '$aUsers = ';	print_r($plxAdmin->aUsers);
 	// echo '$aCats = ';	print_r($plxAdmin->aCats);

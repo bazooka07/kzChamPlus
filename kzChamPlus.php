@@ -495,7 +495,7 @@ class kzChamPlus extends plxPlugin {
 							}
 							if($src) {
 ?>
-<img src="<?= $src ?>" alt="<?= $alt ?>" class="<?= __CLASS__ ?>" title="<?= $value ?>"<?= $attr ?> />\n
+<img src="<?= $src ?>" alt="<?= $alt ?>" class="<?= __CLASS__ ?>" title="<?= $value ?>"<?= $attr ?> />
 <?php
 							}
 						}
@@ -1028,9 +1028,9 @@ if(preg_match_all('<?= $pattern ?>', $format, $matches)) {
 					switch(strtoupper($matches[2])) {
 						case 'L' :
 							$label = $this->fields[$nameField]['label'];
-							echo <<< EOT
-<span class="label">$label</span> $value
-EOT;
+?>
+<span class="label"><?= $label ?></span><?= $value ?>
+<?php
 							break;
 						case 'R' :
 							echo "<?php \$$param = '$value'; ?>" . PHP_EOL;
