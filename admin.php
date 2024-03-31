@@ -110,22 +110,22 @@ if(is_integer($page)) {
 /* --------- Traitement des articles cochés ------- */
 if(filter_has_var(INPUT_POST, 'idArts')) {
 	// Sauvegarde des articles modifiés
-	$idArts = filter_input(INPUT_POST, 'idArts', FILTER_SANITIZE_STRING, FILTER_REQUIRE_ARRAY);
+	$idArts = filter_input(INPUT_POST, 'idArts', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_REQUIRE_ARRAY);
 	if(is_array($idArts)) {
 		$id = (count($idArts) == 1) ? $idArts[0] : '(' . implode('|', $idArts) . ')';
 		$plxAdmin->prechauffage('@^' . $id . '\..*\.xml$@');
 		$plxAdmin->page = 1;
 		if($plxAdmin->getArticles()) {
-			$req = filter_input(INPUT_POST, 'new_tag', FILTER_SANITIZE_STRING);
+			$req = filter_input(INPUT_POST, 'new_tag', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 			if(is_string($req)) { $new_tag = trim($req); }
-			$req = filter_input(INPUT_POST, 'del_tag', FILTER_SANITIZE_STRING);
+			$req = filter_input(INPUT_POST, 'del_tag', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 			if(is_string($req)) { $del_tag = trim($req); }
-			$arts = filter_input(INPUT_POST, 'arts', FILTER_SANITIZE_STRING, FILTER_REQUIRE_ARRAY);
+			$arts = filter_input(INPUT_POST, 'arts', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_REQUIRE_ARRAY);
 			foreach($plxAdmin->plxRecord_arts->result as $content) {
 				$idArt = $content['numero'];
 				foreach(array_keys($artFields) as $k) {
 					$field = $plxPlugin::PREFIX . $k;
-					$content[$field] = filter_var($arts[$idArt][$field], FILTER_SANITIZE_STRING);
+					$content[$field] = htmlspecialchars($arts[$idArt][$field]);
 				}
 
 				// Gestion des tags

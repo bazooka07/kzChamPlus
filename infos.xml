@@ -2,8 +2,8 @@
 <document>
     <title>kzChamPlus</title>
     <author>Jean-Pierre Pourrez "Bazooka07"</author>
-    <version>2.6.5</version>
-    <date>02/02/2023</date>
+    <version>2.6.6</version>
+    <date>30/03/2024</date>
     <site>https://www.kazimentou.fr/repo</site>
     <description><![CDATA[Ajoute des champs personnalisés aux articles, pages statiques, catégories et utilisateurs.
 Gére les champs médias. Ajoute et supprime les mots-clés dans les articles.]]></description>

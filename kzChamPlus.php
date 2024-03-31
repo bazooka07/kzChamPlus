@@ -17,6 +17,7 @@
  * */
 
 /* changelog
+ * 2024-03-31 : Remplacer FILTER_SANITIZE_STRING par FILTER_SANITIZE_FULL_SPECIAL_CHARS ou utilisation htmlspecialchars() - ( >= PHP 8.1.0 )
  * 2020-05-10 : Ajout type yes_no pour les champs
  * 2020-11-13 : Ajout du hook plxShowStaticListEnd
  * 2020-10-22 : Corrections linguistiques pour l'occitan (contribution de "Rubén")
@@ -157,13 +158,13 @@ class kzChamPlus extends plxPlugin {
 
 	// Check self::loadParams and self::printFieldConfig for new fields
 	public $paramsNames = array(
-		'name' =>	FILTER_SANITIZE_STRING, // nom du champ
-		'label' =>	FILTER_SANITIZE_STRING, // libellé du champ
+		'name' =>	FILTER_SANITIZE_FULL_SPECIAL_CHARS, // nom du champ
+		'label' =>	FILTER_SANITIZE_FULL_SPECIAL_CHARS, // libellé du champ
 		'entry' =>	FILTER_VALIDATE_INT,	// type de saisie : ligne, bloc-texte, photo (codé en numérique)
 		'place' =>	FILTER_VALIDATE_INT,	// emplacement pour la saisie (codé en numérique)
-		'invite'=>	FILTER_SANITIZE_STRING,
-		'grid'	=>	FILTER_SANITIZE_STRING,
-		'group' =>	FILTER_SANITIZE_STRING
+		'invite'=>	FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+		'grid'	=>	FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+		'group' =>	FILTER_SANITIZE_FULL_SPECIAL_CHARS
 	);
 
 	public $options = array('no_integration' /*, 'champart'*/ ); # extended for Pluxml version <= 5.4
