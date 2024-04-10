@@ -17,6 +17,7 @@
  * */
 
 /* changelog
+ * 2024-04-10 : Fix typo in config.php
  * 2024-03-31 : Remplacer FILTER_SANITIZE_STRING par FILTER_SANITIZE_FULL_SPECIAL_CHARS ou utilisation htmlspecialchars() - ( >= PHP 8.1.0 )
  * 2020-05-10 : Ajout type yes_no pour les champs
  * 2020-11-13 : Ajout du hook plxShowStaticListEnd

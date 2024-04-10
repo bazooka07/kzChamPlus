@@ -6,7 +6,7 @@ plxToken::validateFormToken($_POST);
 
 if(filter_has_var(INPUT_POST, 'import')) {
 	$other = filter_input(INPUT_POST, 'import', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-	$filename = __DIR__ . '/import/$other.php';
+	$filename = __DIR__ . "import/$other.php";
 	if(!empty($other)) {
 		if(file_exists($filename)) {
 			include $filename;
